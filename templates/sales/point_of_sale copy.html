@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}Point of Sale{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Products Grid -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">Products</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" id="productSearch" placeholder="Search products...">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row" id="productGrid">
+                    {% for product in products %}
+                    <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                        <div class="card product-card {% if product.stock_status == 'out_of_stock' %}out-of-stock{% endif %}" 
+                             data-product-id="{{ product.id }}"
+                             data-product-name="{{ product.name }}"
+                             data-product-price="{{ product.selling_price }}"
+                             data-product-stock="{{ product.current_stock }}">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">{{ product.name }}</h6>
+                                <p class="card-text text-success">${{ product.selling_price }}</p>
+                                <small class="text-muted">Stock: {{ product.current_stock }}</small>
+                            </div>
+                            <div class="card-footer">
+                                {% if product.stock_status != 'out_of_stock' %}
+                                <button class="btn btn-primary btn-sm w-100 add-to-cart">Add to Cart</button>
+                                {% else %}
+                                <button class="btn btn-secondary btn-sm w-100" disabled>Out of Stock</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shopping Cart -->
+    <div class="col-md-4">
+        <div class="card sticky-top">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Current Sale</h5>
+            </div>
+            <div class="card-body">
+                <form id="saleForm" method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Cart Items -->
+                    <div id="cartItems" class="mb-3">
+                        <p class="text-muted text-center">No items in cart</p>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="border-top pt-3">
+                        <div class="row mb-2">
+                            <div class="col-6">Subtotal:</div>
+                            <div class="col-6 text-end">$<span id="subtotal">0.00</span></div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-6">Tax:</div>
+                            <div class="col-6 text-end">$<span id="tax">0.00</span></div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6"><strong>Total:</strong></div>
+                            <div class="col-6 text-end"><strong>$<span id="total">0.00</span></strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-select" name="payment_method" required>
+                            <option value="cash">Cash</option>
+                            <option value="card">Credit/Debit Card</option>
+                            <option value="mobile">Mobile Wallet</option>
+                        </select>
+                    </div>
+
+                    <!-- Customer (Optional) -->
+                    <div class="mb-3">
+                        <label class="form-label">Customer (Optional)</label>
+                        <select class="form-select" name="customer">
+                            <option value="">Walk-in Customer</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.id }}">{{ customer.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg" id="completeSale" disabled>
+                            <i class="fas fa-check"></i> Complete Sale
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" id="clearCart">
+                            <i class="fas fa-trash"></i> Clear Cart
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let cart = [];
+
+    // Add to cart functionality
+    document.querySelectorAll('.add-to-cart').forEach(button => {
+        button.addEventListener('click', function() {
+            const card = this.closest('.product-card');
+            const productId = card.dataset.productId;
+            const productName = card.dataset.productName;
+            const productPrice = parseFloat(card.dataset.productPrice);
+            const productStock = parseFloat(card.dataset.productStock);
+
+            // Check if product already in cart
+            const existingItem = cart.find(item => item.id === productId);
+            
+            if (existingItem) {
+                if (existingItem.quantity < productStock) {
+                    existingItem.quantity += 1;
+                    existingItem.total = existingItem.quantity * productPrice;
+                } else {
+                    alert('Not enough stock available!');
+                    return;
+                }
+            } else {
+                cart.push({
+                    id: productId,
+                    name: productName,
+                    price: productPrice,
+                    quantity: 1,
+                    total: productPrice
+                });
+            }
+
+            updateCartDisplay();
+        });
+    });
+
+    function updateCartDisplay() {
+        const cartItems = document.getElementById('cartItems');
+        const subtotalEl = document.getElementById('subtotal');
+        const taxEl = document.getElementById('tax');
+        const totalEl = document.getElementById('total');
+        const completeBtn = document.getElementById('completeSale');
+
+        if (cart.length === 0) {
+            cartItems.innerHTML = '<p class="text-muted text-center">No items in cart</p>';
+            subtotalEl.textContent = '0.00';
+            taxEl.textContent = '0.00';
+            totalEl.textContent = '0.00';
+            completeBtn.disabled = true;
+            return;
+        }
+
+        // Calculate totals
+        const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
+        const tax = subtotal * 0.08; // 8% tax
+        const total = subtotal + tax;
+
+        subtotalEl.textContent = subtotal.toFixed(2);
+        taxEl.textContent = tax.toFixed(2);
+        totalEl.textContent = total.toFixed(2);
+        completeBtn.disabled = false;
+
+        // Update cart items display
+        cartItems.innerHTML = '';
+        cart.forEach((item, index) => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'd-flex justify-content-between align-items-center mb-2 pb-2 border-bottom';
+            itemEl.innerHTML = `
+                <div>
+                    <strong>${item.name}</strong><br>
+                    <small>$${item.price} x ${item.quantity}</small>
+                </div>
+                <div class="text-end">
+                    <strong>$${item.total.toFixed(2)}</strong>
+                    <div class="btn-group btn-group-sm mt-1">
+                        <button type="button" class="btn btn-outline-secondary decrease-qty" data-index="${index}">-</button>
+                        <button type="button" class="btn btn-outline-danger remove-item" data-index="${index}">×</button>
+                    </div>
+                </div>
+            `;
+            cartItems.appendChild(itemEl);
+        });
+
+        // Add event listeners for quantity adjustments
+        document.querySelectorAll('.decrease-qty').forEach(button => {
+            button.addEventListener('click', function() {
+                const index = parseInt(this.dataset.index);
+                if (cart[index].quantity > 1) {
+                    cart[index].quantity -= 1;
+                    cart[index].total = cart[index].quantity * cart[index].price;
+                } else {
+                    cart.splice(index, 1);
+                }
+                updateCartDisplay();
+            });
+        });
+
+        document.querySelectorAll('.remove-item').forEach(button => {
+            button.addEventListener('click', function() {
+                const index = parseInt(this.dataset.index);
+                cart.splice(index, 1);
+                updateCartDisplay();
+            });
+        });
+    }
+
+    // Clear cart
+    document.getElementById('clearCart').addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear the cart?')) {
+            cart = [];
+            updateCartDisplay();
+        }
+    });
+
+    // Product search
+    document.getElementById('productSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        document.querySelectorAll('.product-card').forEach(card => {
+            const productName = card.dataset.productName.toLowerCase();
+            card.style.display = productName.includes(searchTerm) ? 'block' : 'none';
+        });
+    });
+
+    // Form submission
+    document.getElementById('saleForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (cart.length === 0) {
+            alert('Please add items to cart before completing sale.');
+            return;
+        }
+
+        // Add cart data to form
+        const cartInput = document.createElement('input');
+        cartInput.type = 'hidden';
+        cartInput.name = 'cart_data';
+        cartInput.value = JSON.stringify(cart);
+        this.appendChild(cartInput);
+
+        this.submit();
+    });
+</script>
+{% endblock %}

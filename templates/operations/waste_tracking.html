@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}Waste Tracking - Operations{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-trash"></i> Waste Tracking
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWasteModal">
+            <i class="fas fa-plus"></i> Record Waste
+        </button>
+    </div>
+</div>
+
+<!-- Waste Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            This Month's Waste Cost
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ monthly_waste_total }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Spoilage Incidents
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ spoilage_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-skull-crossbones fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Waste Records Table -->
+<div class="card shadow">
+    <div class="card-header">
+        <h5 class="mb-0">Waste Records</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Category</th>
+                        <th>Cost Value</th>
+                        <th>Reason</th>
+                        <th>Recorded By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in waste_records %}
+                    <tr>
+                        <td>{{ record.timestamp|date:"M d, Y" }}</td>
+                        <td>
+                            <strong>{{ record.product.name }}</strong>
+                            <br><small class="text-muted">{{ record.product.sku }}</small>
+                        </td>
+                        <td>{{ record.quantity }}</td>
+                        <td>
+                            <span class="badge bg-{% if record.category == 'spoilage' %}danger{% elif record.category == 'damage' %}warning{% else %}secondary{% endif %}">
+                                {{ record.get_category_display }}
+                            </span>
+                        </td>
+                        <td class="text-danger">${{ record.cost_value }}</td>
+                        <td>
+                            <small>{{ record.reason|truncatewords:10 }}</small>
+                        </td>
+                        <td>{{ record.recorded_by.username }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-recycle fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No waste records found</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Waste Modal -->
+<div class="modal fade" id="addWasteModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Record Waste</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Product</label>
+                                <select class="form-select" name="product" required>
+                                    <option value="">Select Product</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}" data-cost="{{ product.cost_price }}">
+                                        {{ product.name }} (Stock: {{ product.current_stock }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Quantity</label>
+                                <input type="number" class="form-control" name="quantity" step="0.001" min="0.001" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Waste Category</label>
+                                <select class="form-select" name="category" required>
+                                    <option value="spoilage">Spoilage</option>
+                                    <option value="damage">Damage</option>
+                                    <option value="expired">Expired</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Cost Value</label>
+                                <input type="number" class="form-control" name="cost_value" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Reason</label>
+                        <textarea class="form-control" name="reason" rows="3" placeholder="Explain why this was wasted..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Auto-calculate cost value based on product selection and quantity
+    document.querySelector('select[name="product"]').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const costPrice = selectedOption.dataset.cost;
+        const quantityInput = document.querySelector('input[name="quantity"]');
+        const costValueInput = document.querySelector('input[name="cost_value"]');
+        
+        if (costPrice && quantityInput.value) {
+            costValueInput.value = (parseFloat(costPrice) * parseFloat(quantityInput.value)).toFixed(2);
+        }
+    });
+
+    document.querySelector('input[name="quantity"]').addEventListener('input', function() {
+        const productSelect = document.querySelector('select[name="product"]');
+        const selectedOption = productSelect.options[productSelect.selectedIndex];
+        const costPrice = selectedOption.dataset.cost;
+        const costValueInput = document.querySelector('input[name="cost_value"]');
+        
+        if (costPrice && this.value) {
+            costValueInput.value = (parseFloat(costPrice) * parseFloat(this.value)).toFixed(2);
+        }
+    });
+</script>
+{% endblock %}

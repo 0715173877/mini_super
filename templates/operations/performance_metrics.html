@@ -1,0 +1,549 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Performance Metrics - POS.CarlKasa{% endblock %}
+
+{% block page_title %}Performance Dashboard{% endblock %}
+
+{% block content_title %}Performance Metrics{% endblock %}
+{% block content_subtitle %}Comprehensive store performance and operational insights{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Metrics Period</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="period" class="form-label">Time Period</label>
+                        <select class="form-select" id="period" name="period">
+                            <option value="today" {% if period == 'today' %}selected{% endif %}>Today</option>
+                            <option value="week" {% if period == 'week' %}selected{% endif %}>This Week</option>
+                            <option value="month" {% if period == 'month' %}selected{% endif %}>This Month</option>
+                            <option value="quarter" {% if period == 'quarter' %}selected{% endif %}>This Quarter</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="compare_with" class="form-label">Compare With</label>
+                        <select class="form-select" id="compare_with" name="compare_with">
+                            <option value="">No Comparison</option>
+                            <option value="previous_period" {% if compare_with == 'previous_period' %}selected{% endif %}>Previous Period</option>
+                            <option value="last_year" {% if compare_with == 'last_year' %}selected{% endif %}>Same Period Last Year</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="btn-group w-100">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-chart-line"></i> Update Metrics
+                            </button>
+                            <a href="{% url 'performance-metrics' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Performance Indicators -->
+<div class="row mb-4">
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-start-primary shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Revenue
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ current_week_sales|floatformat:2 }}</div>
+                        {% if sales_growth != 0 %}
+                        <div class="mt-2 mb-0 text-xs">
+                            <span class="{% if sales_growth > 0 %}text-success{% else %}text-danger{% endif %}">
+                                <i class="fas fa-arrow-{% if sales_growth > 0 %}up{% else %}down{% endif %}"></i>
+                                {{ sales_growth|floatformat:1 }}%
+                            </span>
+                            vs previous
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-start-success shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Transactions
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_transactions }}</div>
+                        <div class="mt-2 mb-0 text-xs text-muted">
+                            Avg: ${{ avg_transaction_value|floatformat:2 }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-start-info shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Customers
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_customers_today }}</div>
+                        <div class="mt-2 mb-0 text-xs text-muted">
+                            {{ new_customers_today }} new today
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-start-warning shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Stock Health
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stock_health|floatformat:1 }}%</div>
+                        <div class="mt-2 mb-0 text-xs">
+                            <span class="{% if low_stock > 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ low_stock }} low stock
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-start-danger shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Waste Cost
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ monthly_waste|floatformat:2 }}</div>
+                        <div class="mt-2 mb-0 text-xs text-muted">
+                            This month
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-trash fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-start-secondary shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                            Productivity
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ staff_productivity|floatformat:2 }}</div>
+                        <div class="mt-2 mb-0 text-xs text-muted">
+                            Sales per hour
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Sales Performance -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar"></i> Sales Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Health -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-heartbeat"></i> Inventory Health
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4 mb-3">
+                        <div class="border rounded p-3">
+                            <div class="h3 mb-1 text-success">{{ in_stock_count }}</div>
+                            <small class="text-muted">In Stock</small>
+                        </div>
+                    </div>
+                    <div class="col-4 mb-3">
+                        <div class="border rounded p-3">
+                            <div class="h3 mb-1 text-warning">{{ low_stock }}</div>
+                            <small class="text-muted">Low Stock</small>
+                        </div>
+                    </div>
+                    <div class="col-4 mb-3">
+                        <div class="border rounded p-3">
+                            <div class="h3 mb-1 text-danger">{{ out_of_stock }}</div>
+                            <small class="text-muted">Out of Stock</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress mb-3" style="height: 20px;">
+                    <div class="progress-bar bg-success" style="width: {{ healthy_percentage }}%">
+                        {{ healthy_percentage|floatformat:0 }}%
+                    </div>
+                    <div class="progress-bar bg-warning" style="width: {{ low_percentage }}%">
+                        {{ low_percentage|floatformat:0 }}%
+                    </div>
+                    <div class="progress-bar bg-danger" style="width: {{ out_percentage }}%">
+                        {{ out_percentage|floatformat:0 }}%
+                    </div>
+                </div>
+                <div class="small text-muted text-center">
+                    Overall Inventory Health: {{ stock_health|floatformat:1 }}%
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Operational Metrics -->
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock"></i> Peak Hours
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if peak_hours %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Hour</th>
+                                <th class="text-end">Customers</th>
+                                <th class="text-end">Sales</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hour in peak_hours %}
+                            <tr>
+                                <td>{{ hour.hour|stringformat:"02d" }}:00</td>
+                                <td class="text-end">{{ hour.customer_count }}</td>
+                                <td class="text-end">${{ hour.total_sales|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                    <p>No peak hour data available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-money-bill-wave"></i> Payment Methods
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="paymentChart" width="200" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tachometer-alt"></i> Performance Score
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="gauge-container">
+                    <div class="gauge">
+                        <div class="gauge__body">
+                            <div class="gauge__fill" style="transform: rotate({{ performance_score }}deg);"></div>
+                            <div class="gauge__cover">{{ overall_score|floatformat:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">Overall Performance Score</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Staff Productivity -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user-tie"></i> Staff Productivity
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Staff Member</th>
+                                <th class="text-center">Shifts</th>
+                                <th class="text-center">Total Hours</th>
+                                <th class="text-center">Sales Processed</th>
+                                <th class="text-end">Total Sales</th>
+                                <th class="text-end">Sales/Hour</th>
+                                <th class="text-center">Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for staff in staff_metrics %}
+                            <tr>
+                                <td>
+                                    <strong>{{ staff.staff.user.get_full_name|default:staff.staff.user.username }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ staff.staff.position }}</small>
+                                </td>
+                                <td class="text-center">{{ staff.shift_count }}</td>
+                                <td class="text-center">{{ staff.total_hours|floatformat:1 }}</td>
+                                <td class="text-center">{{ staff.sales_processed }}</td>
+                                <td class="text-end">${{ staff.sales_amount|floatformat:2 }}</td>
+                                <td class="text-end">${{ staff.sales_per_hour|floatformat:2 }}</td>
+                                <td class="text-center">
+                                    {% if staff.sales_per_hour > 100 %}
+                                    <span class="badge bg-success">Excellent</span>
+                                    {% elif staff.sales_per_hour > 50 %}
+                                    <span class="badge bg-info">Good</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">Needs Improvement</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-user-tie fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No staff productivity data available.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sales Chart
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        const salesChart = new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Current Week',
+                    data: [1200, 1900, 1500, 2100, 1800, 2500, 2200],
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }, {
+                    label: 'Previous Week',
+                    data: [1100, 1700, 1400, 1900, 1600, 2300, 2000],
+                    borderColor: '#858796',
+                    borderDash: [5, 5],
+                    tension: 0.3,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                }
+            }
+        });
+
+        // Payment Methods Chart
+        const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+        const paymentChart = new Chart(paymentCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Cash', 'Card', 'Mobile', 'Transfer'],
+                datasets: [{
+                    data: [40, 35, 20, 5],
+                    backgroundColor: [
+                        '#1cc88a',
+                        '#4e73df',
+                        '#36b9cc',
+                        '#858796'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Gauge styling
+        const gauge = document.querySelector('.gauge');
+        const gaugeCover = document.querySelector('.gauge__cover');
+        
+        // Update gauge color based on score
+        const score = parseInt(gaugeCover.textContent);
+        if (score >= 80) {
+            gauge.style.setProperty('--gauge-color', '#1cc88a');
+        } else if (score >= 60) {
+            gauge.style.setProperty('--gauge-color', '#f6c23e');
+        } else {
+            gauge.style.setProperty('--gauge-color', '#e74a3b');
+        }
+    });
+</script>
+
+<style>
+    :root {
+        --gauge-color: #4e73df;
+    }
+
+    .border-start-primary { border-left: 4px solid #4e73df !important; }
+    .border-start-success { border-left: 4px solid #1cc88a !important; }
+    .border-start-info { border-left: 4px solid #36b9cc !important; }
+    .border-start-warning { border-left: 4px solid #f6c23e !important; }
+    .border-start-danger { border-left: 4px solid #e74a3b !important; }
+    .border-start-secondary { border-left: 4px solid #858796 !important; }
+    
+    .text-xs {
+        font-size: 0.7rem;
+    }
+
+    /* Gauge Styles */
+    .gauge {
+        width: 100%;
+        max-width: 150px;
+        margin: 0 auto;
+    }
+
+    .gauge__body {
+        width: 100%;
+        height: 0;
+        padding-bottom: 50%;
+        background: #f0f0f0;
+        position: relative;
+        border-top-left-radius: 100% 200%;
+        border-top-right-radius: 100% 200%;
+        overflow: hidden;
+    }
+
+    .gauge__fill {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: inherit;
+        height: 100%;
+        background: var(--gauge-color);
+        transform-origin: center top;
+        transform: rotate(0.25turn);
+        transition: transform 0.5s ease-out;
+    }
+
+    .gauge__cover {
+        width: 75%;
+        height: 150%;
+        background: white;
+        border-radius: 50%;
+        position: absolute;
+        top: 25%;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--gauge-color);
+    }
+
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+
+    .progress {
+        border-radius: 10px;
+    }
+
+    .progress-bar {
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}

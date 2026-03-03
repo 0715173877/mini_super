@@ -1,0 +1,458 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sales History{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-history"></i> Sales History
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'point-of-sale' %}" class="btn btn-primary me-2">
+            <i class="fas fa-cash-register"></i> New Sale
+        </a>
+        <a href="{% url 'daily-reports' %}" class="btn btn-outline-info">
+            <i class="fas fa-chart-line"></i> View Reports
+        </a>
+    </div>
+</div>
+
+<!-- Filters and Statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="dateFilter" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="dateFilter" name="date" value="{{ filter_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="paymentFilter" class="form-label">Payment Method</label>
+                        <select class="form-select" id="paymentFilter" name="payment_method">
+                            <option value="">All Methods</option>
+                            <option value="cash" {% if payment_method == 'cash' %}selected{% endif %}>Cash</option>
+                            <option value="card" {% if payment_method == 'card' %}selected{% endif %}>Card</option>
+                            <option value="mobile" {% if payment_method == 'mobile' %}selected{% endif %}>Mobile Wallet</option>
+                            <option value="transfer" {% if payment_method == 'transfer' %}selected{% endif %}>Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="searchFilter" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="searchFilter" name="search" 
+                               placeholder="Transaction ID, Customer, Cashier..." value="{{ search_query }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="btn-group w-100">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <a href="{% url 'sale-list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Sales
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ total_sales_amount|default:0|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Transactions
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ sales.paginator.count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-receipt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Avg. Transaction
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            ${{ average_sale_amount|default:0|floatformat:2 }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Today's Sales
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ today_sales|default:0|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Table -->
+<div class="card shadow">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-list"></i> Sales Records
+            {% if filter_date or payment_method or search_query %}
+            <small class="text-muted">(Filtered Results)</small>
+            {% endif %}
+        </h5>
+        <div class="text-muted small">
+            Showing {{ sales.start_index }} - {{ sales.end_index }} of {{ sales.paginator.count }}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th width="12%">Transaction ID</th>
+                        <th width="15%">Date & Time</th>
+                        <th width="15%">Customer</th>
+                        <th width="15%">Cashier</th>
+                        <th width="10%" class="text-center">Items</th>
+                        <th width="12%" class="text-end">Amount</th>
+                        <th width="12%" class="text-center">Payment</th>
+                        <th width="9%" class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>
+                            <strong>{{ sale.transaction_id }}</strong>
+                        </td>
+                        <td>
+                            <div>
+                                <small class="text-muted">{{ sale.timestamp|date:"M d, Y" }}</small>
+                                <br>
+                                <small>{{ sale.timestamp|date:"H:i" }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            {% if sale.customer %}
+                                {{ sale.customer.name }}
+                                {% if sale.customer.is_regular %}
+                                    <span class="badge bg-success ms-1">Regular</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">Walk-in</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ sale.cashier.get_full_name|default:sale.cashier.username }}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary rounded-pill">{{ sale.items.count }}</span>
+                        </td>
+                        <td class="text-end">
+                            <strong class="text-success">${{ sale.total_amount|floatformat:2 }}</strong>
+                            <br>
+                            <small class="text-muted">Tax: ${{ sale.tax_amount|floatformat:2 }}</small>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge 
+                                {% if sale.payment_method == 'cash' %}bg-success
+                                {% elif sale.payment_method == 'card' %}bg-primary
+                                {% elif sale.payment_method == 'mobile' %}bg-info
+                                {% else %}bg-secondary{% endif %}">
+                                {{ sale.get_payment_method_display }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'sale-detail' sale.pk %}" class="btn btn-outline-primary" 
+                                   title="View Details" data-bs-toggle="tooltip">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'sale-detail' sale.pk %}?print=true" class="btn btn-outline-secondary" 
+                                   title="Print Receipt" data-bs-toggle="tooltip" target="_blank">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="fas fa-receipt fa-3x mb-3"></i>
+                                <h4>No sales found</h4>
+                                <p>
+                                    {% if filter_date or payment_method or search_query %}
+                                    Try adjusting your filters or search criteria.
+                                    {% else %}
+                                    No sales have been recorded yet.
+                                    {% endif %}
+                                </p>
+                                <a href="{% url 'point-of-sale' %}" class="btn btn-primary">
+                                    <i class="fas fa-cash-register"></i> Make First Sale
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if sales.paginator.num_pages > 1 %}
+<nav aria-label="Sales pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if sales.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1{% if filter_date %}&date={{ filter_date }}{% endif %}{% if payment_method %}&payment_method={{ payment_method }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                First
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ sales.previous_page_number }}{% if filter_date %}&date={{ filter_date }}{% endif %}{% if payment_method %}&payment_method={{ payment_method }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                Previous
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in sales.paginator.page_range %}
+            {% if sales.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > sales.number|add:'-3' and num < sales.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if filter_date %}&date={{ filter_date }}{% endif %}{% if payment_method %}&payment_method={{ payment_method }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if sales.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ sales.next_page_number }}{% if filter_date %}&date={{ filter_date }}{% endif %}{% if payment_method %}&payment_method={{ payment_method }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                Next
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ sales.paginator.num_pages }}{% if filter_date %}&date={{ filter_date }}{% endif %}{% if payment_method %}&payment_method={{ payment_method }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                Last
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+    
+    <div class="text-center text-muted small mt-2">
+        Page {{ sales.number }} of {{ sales.paginator.num_pages }}
+    </div>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Auto-submit form when filters change (optional)
+        const dateFilter = document.getElementById('dateFilter');
+        const paymentFilter = document.getElementById('paymentFilter');
+        
+        // Uncomment if you want auto-filtering
+        // dateFilter.addEventListener('change', function() {
+        //     this.form.submit();
+        // });
+        // paymentFilter.addEventListener('change', function() {
+        //     this.form.submit();
+        // });
+
+        // Add row hover effects
+        const tableRows = document.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#f8f9fa';
+                this.style.cursor = 'pointer';
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+            
+            // Make entire row clickable (except action buttons)
+            row.addEventListener('click', function(e) {
+                if (!e.target.closest('.btn-group')) {
+                    const detailLink = this.querySelector('a[href*="sale-detail"]');
+                    if (detailLink) {
+                        window.location.href = detailLink.href;
+                    }
+                }
+            });
+        });
+
+        // Quick search functionality
+        const searchFilter = document.getElementById('searchFilter');
+        if (searchFilter) {
+            // Add debounced search (optional enhancement)
+            let searchTimeout;
+            searchFilter.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    if (this.value.length >= 3 || this.value.length === 0) {
+                        this.form.submit();
+                    }
+                }, 500);
+            });
+        }
+    });
+
+    function printReceipt(transactionId) {
+        // You can implement receipt printing logic here
+        // For now, just open the detail page in a new window for printing
+        const detailUrl = `{% url 'sale-detail' 0 %}`.replace('0', '{{ sale.pk }}');
+        window.open(detailUrl, '_blank');
+        
+        // Optional: Show a toast notification
+        showToast('Opening receipt for printing...', 'info');
+    }
+
+    function showToast(message, type = 'info') {
+        // Simple toast notification
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(toast);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    }
+
+    // Export functionality (optional enhancement)
+    function exportSales() {
+        // You can implement CSV/Excel export here
+        showToast('Export feature coming soon!', 'warning');
+    }
+</script>
+
+<style>
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.875rem;
+    }
+
+    .table td {
+        vertical-align: middle;
+        font-size: 0.875rem;
+    }
+
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+
+    .badge {
+        font-size: 0.75em;
+    }
+
+    .pagination .page-link {
+        border-radius: 5px;
+        margin: 0 2px;
+    }
+
+    .border-start-primary {
+        border-left: 4px solid #4e73df !important;
+    }
+
+    .border-start-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+
+    .border-start-info {
+        border-left: 4px solid #36b9cc !important;
+    }
+
+    .border-start-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+
+    .text-xs {
+        font-size: 0.7rem;
+    }
+
+    @media (max-width: 768px) {
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.8rem;
+        }
+    }
+</style>
+{% endblock %}

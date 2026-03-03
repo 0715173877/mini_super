@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Suppliers - POS.CarlKasa{% endblock %}
+
+{% block page_title %}Suppliers Management{% endblock %}
+
+{% block content_title %}Suppliers{% endblock %}
+{% block content_subtitle %}Manage your product suppliers and vendors{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Suppliers</h5>
+                <a href="{% url 'supplier-create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Supplier
+                </a>
+            </div>
+            <div class="card-body">
+                {% if suppliers %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Contact Person</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Products</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for supplier in suppliers %}
+                            <tr>
+                                <td>
+                                    <strong>{{ supplier.name }}</strong>
+                                </td>
+                                <td>{{ supplier.contact_person|default:"-" }}</td>
+                                <td>
+                                    {% if supplier.email %}
+                                    <a href="mailto:{{ supplier.email }}">{{ supplier.email }}</a>
+                                    {% else %}-{% endif %}
+                                </td>
+                                <td>{{ supplier.phone|default:"-" }}</td>
+                                <td>
+                                    <span class="badge bg-primary">{{ supplier.product_count }}</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'supplier-update' supplier.pk %}" class="btn btn-outline-secondary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                    <h5>No suppliers found</h5>
+                    <p class="text-muted">Add your first supplier to start managing your inventory.</p>
+                    <a href="{% url 'supplier-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Supplier
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

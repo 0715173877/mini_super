@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Sale {{ sale.transaction_id }} - Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-receipt"></i> Sale Details
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'sale-list' %}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left"></i> Back to Sales
+        </a>
+        <button class="btn btn-outline-primary" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Receipt
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Sale Information Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-shopping-cart"></i> Sale #{{ sale.transaction_id }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Transaction ID:</th>
+                                <td><strong>{{ sale.transaction_id }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Date & Time:</th>
+                                <td>{{ sale.timestamp|date:"M d, Y H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Cashier:</th>
+                                <td>{{ sale.cashier.get_full_name|default:sale.cashier.username }}</td>
+                            </tr>
+                            <tr>
+                                <th>Customer:</th>
+                                <td>
+                                    {% if sale.customer %}
+                                        {{ sale.customer.name }}
+                                        {% if sale.customer.is_regular %}
+                                            <span class="badge bg-success ms-1">Regular</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">Walk-in Customer</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Payment Method:</th>
+                                <td>
+                                    <span class="badge 
+                                        {% if sale.payment_method == 'cash' %}bg-success
+                                        {% elif sale.payment_method == 'card' %}bg-primary
+                                        {% elif sale.payment_method == 'mobile' %}bg-info
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ sale.get_payment_method_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Status:</th>
+                                <td><span class="badge bg-success">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <th>Items Count:</th>
+                                <td>{{ sale.items.count }} items</td>
+                            </tr>
+                            <tr>
+                                <th>Total Amount:</th>
+                                <td class="h5 text-success">TZS {{ sale.total_amount|floatformat:2|intcomma }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sale Items Table -->
+        <div class="card shadow">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list"></i> Sale Items ({{ sale.items.count }})
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="5%">#</th>
+                                <th>Product</th>
+                                <th class="text-center">Quantity</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in sale_items %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-box text-muted me-2"></i>
+                                        </div>
+                                        <div class="flex-grow-1 ms-2">
+                                            <strong>{{ item.product.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                SKU: {{ item.product.sku }}
+                                                {% if item.product.category %}
+                                                | Category: {{ item.product.category.name }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary rounded-pill">{{ item.quantity|intcomma }}</span>
+                                </td>
+                                <td class="text-end">TZS {{ item.unit_price|floatformat:2|intcomma }}</td>
+                                <td class="text-end">
+                                    <strong>TZS {{ item.total_price|floatformat:2|intcomma }}</strong>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="fas fa-exclamation-circle fa-2x text-muted mb-3"></i>
+                                    <p class="text-muted">No items found in this sale.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Sidebar -->
+    <div class="col-lg-4">
+        <!-- Amount Summary -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-calculator"></i> Amount Summary</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td>Subtotal:</td>
+                        <td class="text-end">TZS {{ sale.subtotal|default:sale.total_amount|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Tax (8%):</td>
+                        <td class="text-end">TZS {{ sale.tax_amount|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr class="border-top">
+                        <th>Total:</th>
+                        <th class="text-end h5 text-success">TZS {{ sale.total_amount|floatformat:2|intcomma }}</th>
+                    </tr>
+                </table>
+
+                {% if sale.tax_amount %}
+                <div class="mt-3 p-2 bg-light rounded">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Tax calculated at 8% on subtotal
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'point-of-sale' %}" class="btn btn-primary">
+                        <i class="fas fa-cash-register"></i> New Sale
+                    </a>
+                    <a href="{% url 'sale-list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list"></i> View All Sales
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sale Statistics -->
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Sale Statistics</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-2">
+                            <div class="h5 mb-1 text-primary">{{ sale.items.count|intcomma }}</div>
+                            <small class="text-muted">Items Sold</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-2">
+                            <div class="h5 mb-1 text-success">TZS {{ sale.total_amount|floatformat:2|intcomma }}</div>
+                            <small class="text-muted">Total Revenue</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-2">
+                            <div class="h5 mb-1 text-info">
+                                TZS {{ sale.average_item_price|default:0|floatformat:2|intcomma }}
+                            </div>
+                            <small class="text-muted">Avg. Item Price</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-2">
+                            <div class="h5 mb-1 text-warning">
+                                {{ sale.timestamp|timesince }}
+                            </div>
+                            <small class="text-muted">Time Ago</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Receipt Section (Hidden until printed) -->
+<div id="printable-receipt" class="d-none">
+    <div class="receipt-container p-4" style="max-width: 300px; font-family: monospace;">
+        <div class="text-center mb-3">
+            <h4>MiniSuper Store</h4>
+            <p class="mb-1">123 Supermarket Street</p>
+            <p class="mb-1">City, State 12345</p>
+            <p class="mb-1">Phone: (555) 123-4567</p>
+        </div>
+        
+        <hr>
+        
+        <div class="mb-3">
+            <p class="mb-1"><strong>Receipt #:</strong> {{ sale.transaction_id }}</p>
+            <p class="mb-1"><strong>Date:</strong> {{ sale.timestamp|date:"M d, Y H:i" }}</p>
+            <p class="mb-1"><strong>Cashier:</strong> {{ sale.cashier.username }}</p>
+        </div>
+        
+        <hr>
+        
+        <div class="mb-3">
+            {% for item in sale_items %}
+            <div class="d-flex justify-content-between mb-1">
+                <div>
+                    {{ item.product.name|truncatechars:20 }}
+                    <br>
+                    <small>{{ item.quantity|intcomma }} x TZS {{ item.unit_price|floatformat:2|intcomma }}</small>
+                </div>
+                <div>TZS {{ item.total_price|floatformat:2|intcomma }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <hr>
+        
+        <div class="mb-3">
+            <div class="d-flex justify-content-between">
+                <div>Subtotal:</div>
+                <div>TZS {{ sale.subtotal|default:sale.total_amount|floatformat:2|intcomma }}</div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <div>Tax (8%):</div>
+                <div>TZS {{ sale.tax_amount|floatformat:2|intcomma }}</div>
+            </div>
+            <div class="d-flex justify-content-between fw-bold">
+                <div>TOTAL:</div>
+                <div>TZS {{ sale.total_amount|floatformat:2|intcomma }}</div>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <p><strong>Payment:</strong> {{ sale.get_payment_method_display }}</p>
+        </div>
+        
+        <hr>
+        
+        <div class="text-center">
+            <p class="mb-1">Thank you for shopping with us!</p>
+            <p class="mb-1">Please keep this receipt for returns</p>
+            <p>Have a great day!</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Print receipt functionality
+        const printButton = document.querySelector('button[onclick="window.print()"]');
+        
+        printButton.addEventListener('click', function() {
+            // You can add custom print logic here if needed
+            console.log('Printing receipt for sale: {{ sale.transaction_id }}');
+        });
+
+        // Add some interactive features
+        const saleItems = document.querySelectorAll('tbody tr');
+        saleItems.forEach((row, index) => {
+            row.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#f8f9fa';
+            });
+            row.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+        });
+
+        // Calculate and display average item price
+        const totalAmount = parseFloat('{{ sale.total_amount }}');
+        const itemCount = parseInt('{{ sale.items.count }}');
+        const averagePrice = itemCount > 0 ? totalAmount / itemCount : 0;
+        
+        // Update the average price display
+        const avgPriceElement = document.querySelector('.text-info.h5');
+        if (avgPriceElement && isNaN(parseFloat(avgPriceElement.textContent.replace('TZS ', '').replace(/,/g, '')))) {
+            // Format the average price with commas
+            avgPriceElement.textContent = 'TZS ' + averagePrice.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+    });
+
+    // Helper function to format numbers with commas (for JavaScript)
+    function formatNumberWithCommas(number) {
+        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+</script>
+
+<style>
+    @media print {
+        .sidebar, .navbar, .btn-toolbar, .card-header.bg-warning, .card-header.bg-info {
+            display: none !important;
+        }
+        
+        #printable-receipt {
+            display: block !important;
+        }
+        
+        .container-fluid {
+            padding: 0 !important;
+        }
+        
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+        font-weight: 600;
+    }
+
+    .badge {
+        font-size: 0.75em;
+    }
+
+    .receipt-container {
+        font-size: 12px;
+        line-height: 1.2;
+    }
+</style>
+{% endblock %}

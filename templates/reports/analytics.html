@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Business Analytics - Cashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Business Analytics</h1>
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                Time Period: {{ period|title }}
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="?period=week">Last 7 Days</a></li>
+                <li><a class="dropdown-item" href="?period=month">Last 30 Days</a></li>
+                <li><a class="dropdown-item" href="?period=quarter">Last 90 Days</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Revenue</h6>
+                    <h3>${{ total_revenue|floatformat:2|intcomma }}</h3>
+                    <small>Period: {{ start_date|date:"M d" }} - {{ end_date|date:"M d, Y" }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Transactions</h6>
+                    <h3>{{ total_transactions|intcomma }}</h3>
+                    <small>{{ period|title }} Performance</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Avg Transaction Value</h6>
+                    <h3>${{ avg_transaction_value|floatformat:2|intcomma }}</h3>
+                    <small>Per Sale</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Trend -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Revenue Trend</h6>
+                </div>
+                <div class="card-body">
+                    <!-- This would typically contain a chart -->
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Revenue</th>
+                                    <th>Transactions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for day in revenue_trend %}
+                                <tr>
+                                    <td>{{ day.date }}</td>
+                                    <td>${{ day.revenue|floatformat:2|intcomma }}</td>
+                                    <td>{{ day.transactions }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Performance -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Category Performance</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Revenue</th>
+                                    <th>Units</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in category_performance %}
+                                <tr>
+                                    <td>{{ category.product__category__name }}</td>
+                                    <td>${{ category.revenue|floatformat:2|intcomma }}</td>
+                                    <td>{{ category.units_sold }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Performance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Top Performing Products</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Category</th>
+                                    <th>Units Sold</th>
+                                    <th>Revenue</th>
+                                    <th>Profit</th>
+                                    <th>Profit Margin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in product_performance %}
+                                <tr>
+                                    <td>{{ product.product__name }}</td>
+                                    <td>{{ product.product__category__name }}</td>
+                                    <td>{{ product.units_sold|intcomma }}</td>
+                                    <td>${{ product.revenue|floatformat:2|intcomma }}</td>
+                                    <td>${{ product.profit|floatformat:2|intcomma }}</td>
+                                    <td>
+                                        {% widthratio product.profit product.revenue 100 as margin %}
+                                        {{ margin|floatformat:1 }}%
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Analytics -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Top Customers</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Total Spent</th>
+                                    <th>Visits</th>
+                                    <th>Avg. Spend</th>
+                                    <th>Last Visit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in customer_analytics %}
+                                <tr>
+                                    <td>{{ customer.customer__name|default:"Walk-in Customer" }}</td>
+                                    <td>${{ customer.total_spent|floatformat:2|intcomma }}</td>
+                                    <td>{{ customer.visit_count }}</td>
+                                    <td>${{ customer.avg_spent|floatformat:2|intcomma }}</td>
+                                    <td>Recent</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

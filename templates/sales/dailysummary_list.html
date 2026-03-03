@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Daily Summaries - POS.CarlKasa{% endblock %}
+
+{% block page_title %}Daily Summaries Archive{% endblock %}
+
+{% block content_title %}Daily Summaries{% endblock %}
+{% block content_subtitle %}Historical daily sales performance data{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Summary Filters</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="month" class="form-label">Month</label>
+                        <select class="form-select" id="month" name="month">
+                            <option value="">All Months</option>
+                            {% for month_num, month_name in months %}
+                            <option value="{{ month_num }}" {% if selected_month == month_num %}selected{% endif %}>
+                                {{ month_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="year" class="form-label">Year</label>
+                        <select class="form-select" id="year" name="year">
+                            <option value="">All Years</option>
+                            {% for year in years %}
+                            <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>
+                                {{ year }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               placeholder="Search by date..." value="{{ search_query }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="btn-group w-100">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <a href="{% url 'daily-reports' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ summary_count }}</h4>
+                        <p class="mb-0">Days Recorded</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calendar-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>${{ total_revenue|default:0|floatformat:2 }}</h4>
+                        <p class="mb-0">Total Revenue</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-dollar-sign fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_customers|default:0 }}</h4>
+                        <p class="mb-0">Total Customers</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>${{ avg_daily_sales|default:0|floatformat:2 }}</h4>
+                        <p class="mb-0">Avg. Daily Sales</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Daily Summaries Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-archive"></i> Daily Summaries
+                    {% if selected_month or selected_year or search_query %}
+                    <small class="text-muted">(Filtered Results)</small>
+                    {% endif %}
+                </h5>
+                <div class="text-muted small">
+                    Showing {{ daily_summaries.start_index }} - {{ daily_summaries.end_index }} of {{ daily_summaries.paginator.count }}
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th class="text-end">Total Sales</th>
+                                <th class="text-end">Cash</th>
+                                <th class="text-end">Card</th>
+                                <th class="text-end">Mobile</th>
+                                <th class="text-center">Customers</th>
+                                <th class="text-center">Avg. Transaction</th>
+                                <th class="text-center">Day of Week</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for summary in daily_summaries %}
+                            <tr>
+                                <td>
+                                    <strong>{{ summary.date|date:"M d, Y" }}</strong>
+                                </td>
+                                <td class="text-end">
+                                    <strong class="text-success">${{ summary.total_sales|floatformat:2 }}</strong>
+                                </td>
+                                <td class="text-end">
+                                    <span class="text-success">${{ summary.cash_sales|floatformat:2 }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="text-primary">${{ summary.card_sales|floatformat:2 }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="text-info">${{ summary.mobile_sales|floatformat:2 }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ summary.total_customers }}</span>
+                                </td>
+                                <td class="text-center">
+                                    ${{ summary.avg_transaction|floatformat:2 }}
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">{{ summary.date|date:"l" }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'sale-list' %}?date={{ summary.date|date:'Y-m-d' }}" 
+                                           class="btn btn-outline-primary" title="View Day's Sales">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'daily-reports' %}?start_date={{ summary.date|date:'Y-m-d' }}&end_date={{ summary.date|date:'Y-m-d' }}" 
+                                           class="btn btn-outline-info" title="View Report">
+                                            <i class="fas fa-chart-bar"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fas fa-database fa-3x mb-3"></i>
+                                        <h4>No daily summaries found</h4>
+                                        <p>
+                                            {% if selected_month or selected_year or search_query %}
+                                            No summaries match your filters.
+                                            {% else %}
+                                            Daily summaries will appear here after sales are made.
+                                            {% endif %}
+                                        </p>
+                                        {% if not selected_month and not selected_year and not search_query %}
+                                        <a href="{% url 'point-of-sale' %}" class="btn btn-primary">
+                                            <i class="fas fa-cash-register"></i> Start Selling
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if daily_summaries.paginator.num_pages > 1 %}
+<nav aria-label="Daily summaries pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if daily_summaries.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                First
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ daily_summaries.previous_page_number }}{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                Previous
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in daily_summaries.paginator.page_range %}
+            {% if daily_summaries.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > daily_summaries.number|add:'-3' and num < daily_summaries.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if daily_summaries.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ daily_summaries.next_page_number }}{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                Next
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ daily_summaries.paginator.num_pages }}{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                Last
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+    
+    <div class="text-center text-muted small mt-2">
+        Page {{ daily_summaries.number }} of {{ daily_summaries.paginator.num_pages }}
+    </div>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add row hover effects
+        const tableRows = document.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#f8f9fa';
+                this.style.cursor = 'pointer';
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+            
+            // Make row clickable to view sales for that day
+            row.addEventListener('click', function(e) {
+                if (!e.target.closest('.btn-group')) {
+                    const viewLink = this.querySelector('a[href*="sale-list"]');
+                    if (viewLink) {
+                        window.location.href = viewLink.href;
+                    }
+                }
+            });
+        });
+
+        // Auto-submit form when month/year changes (optional)
+        const monthSelect = document.getElementById('month');
+        const yearSelect = document.getElementById('year');
+        
+        // Uncomment for auto-filtering
+        /*
+        monthSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+        
+        yearSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+        */
+    });
+</script>
+
+<style>
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        font-size: 0.875rem;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    .pagination .page-link {
+        border-radius: 5px;
+        margin: 0 2px;
+    }
+</style>
+{% endblock %}

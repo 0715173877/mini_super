@@ -1,0 +1,44 @@
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+db.sqlite3
+media/
+staticfiles/
+
+# Virtual Environment
+venv/
+env/
+.env
+.env.local
+# .gitignore
+.env
+*.env.local
+*.env.*.local
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+#Other files not related 
+
+
+*.sql
+*.json
+*.db
+db.sqlite3
+# Database files
+*.sql
+*.json
+*.db
+db.sqlite3
+backups/
+*.bak

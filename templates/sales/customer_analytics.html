@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Customer Analytics - POS.CarlKasa{% endblock %}
+
+{% block page_title %}Customer Analytics{% endblock %}
+
+{% block content_title %}Customer Insights{% endblock %}
+{% block content_subtitle %}Understand your customer behavior and purchasing patterns{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Analytics Filters</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="time_period" class="form-label">Time Period</label>
+                        <select class="form-select" id="time_period" name="time_period">
+                            <option value="7" {% if time_period == '7' %}selected{% endif %}>Last 7 Days</option>
+                            <option value="30" {% if time_period == '30' %}selected{% endif %}>Last 30 Days</option>
+                            <option value="90" {% if time_period == '90' %}selected{% endif %}>Last 90 Days</option>
+                            <option value="365" {% if time_period == '365' %}selected{% endif %}>Last Year</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="customer_type" class="form-label">Customer Type</label>
+                        <select class="form-select" id="customer_type" name="customer_type">
+                            <option value="">All Customers</option>
+                            <option value="regular" {% if customer_type == 'regular' %}selected{% endif %}>Regular Only</option>
+                            <option value="walkin" {% if customer_type == 'walkin' %}selected{% endif %}>Walk-in Only</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="btn-group w-100">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Apply Filters
+                            </button>
+                            <a href="{% url 'customer-analytics' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Clear
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Overview Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Customers
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_customers }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Regular Customers
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ regular_customers }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            New Customers (30 days)
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ new_customers }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-plus fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Avg. Customer Value
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ avg_customer_value|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Top Customers -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-trophy"></i> Top Customers by Spending
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if top_customers %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th class="text-end">Total Spent</th>
+                                <th class="text-center">Visits</th>
+                                <th class="text-center">Avg. Spend</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in top_customers %}
+                            <tr>
+                                <td>
+                                    <strong>{{ customer.name|default:"Walk-in Customer" }}</strong>
+                                    {% if customer.email %}
+                                    <br><small class="text-muted">{{ customer.email }}</small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <strong class="text-success">${{ customer.total_spent|floatformat:2 }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ customer.purchase_count }}</span>
+                                </td>
+                                <td class="text-center">
+                                    ${{ customer.avg_spend|floatformat:2 }}
+                                </td>
+                                <td>
+                                    {% if customer.is_regular %}
+                                    <span class="badge bg-success">Regular</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Walk-in</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No customer data available for the selected period.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Segmentation -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie"></i> Customer Segmentation
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-4">
+                        <div class="border rounded p-3">
+                            <div class="h3 text-primary mb-1">{{ regular_percentage|floatformat:1 }}%</div>
+                            <small class="text-muted">Regular Customers</small>
+                            <div class="small text-success">{{ regular_customers }} customers</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-4">
+                        <div class="border rounded p-3">
+                            <div class="h3 text-info mb-1">{{ walkin_percentage|floatformat:1 }}%</div>
+                            <small class="text-muted">Walk-in Customers</small>
+                            <div class="small text-info">{{ walkin_customers }} customers</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-3">
+                            <div class="h4 text-success mb-1">${{ high_value_threshold }}</div>
+                            <small class="text-muted">High Value Threshold</small>
+                            <div class="small text-success">{{ high_value_customers }} customers</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-3">
+                            <div class="h4 text-warning mb-1">{{ repeat_visits_threshold }}+</div>
+                            <small class="text-muted">Frequent Visitors</small>
+                            <div class="small text-warning">{{ frequent_customers }} customers</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Behavior Metrics -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line"></i> Customer Behavior Metrics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <div class="h4 text-primary mb-1">{{ avg_visit_frequency|floatformat:1 }}</div>
+                            <small class="text-muted">Avg. Days Between Visits</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <div class="h4 text-success mb-1">${{ avg_transaction_value|floatformat:2 }}</div>
+                            <small class="text-muted">Avg. Transaction Value</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <div class="h4 text-info mb-1">{{ customer_retention_rate|floatformat:1 }}%</div>
+                            <small class="text-muted">30-Day Retention Rate</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="border rounded p-3">
+                            <div class="h4 text-warning mb-1">{{ peak_visiting_hour }}</div>
+                            <small class="text-muted">Peak Visiting Hour</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Growth Chart -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar"></i> Customer Acquisition Trend
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="customerGrowthChart" width="400" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Customer Growth Chart
+        const growthCtx = document.getElementById('customerGrowthChart').getContext('2d');
+        const growthChart = new Chart(growthCtx, {
+            type: 'line',
+            data: {
+                labels: {{ growth_labels|safe }},
+                datasets: [{
+                    label: 'New Customers',
+                    data: {{ growth_data|safe }},
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Auto-submit form when filters change
+        const timePeriod = document.getElementById('time_period');
+        const customerType = document.getElementById('customer_type');
+        
+        timePeriod.addEventListener('change', function() {
+            this.form.submit();
+        });
+        
+        customerType.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+</script>
+
+<style>
+    .border-start-primary { border-left: 4px solid #4e73df !important; }
+    .border-start-success { border-left: 4px solid #1cc88a !important; }
+    .border-start-info { border-left: 4px solid #36b9cc !important; }
+    .border-start-warning { border-left: 4px solid #f6c23e !important; }
+    
+    .text-xs {
+        font-size: 0.7rem;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}

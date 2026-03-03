@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Purchase Order - POS.CarlKasa{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <i class="fas fa-trash-alt fa-4x text-danger mb-3"></i>
+                <h4>Delete Purchase Order?</h4>
+                <p class="text-muted">
+                    Are you sure you want to delete Purchase Order <strong>PO-{{ object.id|stringformat:"06d" }}</strong>?
+                </p>
+                <p class="text-danger">
+                    <strong>This action cannot be undone.</strong>
+                </p>
+                
+                <div class="mt-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger me-2">
+                            <i class="fas fa-trash"></i> Yes, Delete
+                        </button>
+                        <a href="{% url 'purchase-order-list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

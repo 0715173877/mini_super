@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Purchase Order #{{ form.instance.id }}{% else %}Create Purchase Order{% endif %} - POS.CarlKasa{% endblock %}
+
+{% block page_title %}{% if form.instance.pk %}Edit Purchase Order{% else %}Create Purchase Order{% endif %}{% endblock %}
+
+{% block content_title %}{% if form.instance.pk %}Edit PO-#{{ form.instance.id|stringformat:"06d" }}{% else %}New Purchase Order{% endif %}{% endblock %}
+{% block content_subtitle %}{% if form.instance.pk %}Update purchase order details and items{% else %}Create a new purchase order from your suppliers{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-invoice"></i> 
+                    {% if form.instance.pk %}
+                        Edit Purchase Order #{{ form.instance.id }}
+                    {% else %}
+                        New Purchase Order
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="purchaseOrderForm">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.supplier.id_for_label }}" class="form-label">
+                                    Supplier <span class="text-danger">*</span>
+                                </label>
+                                {{ form.supplier }}
+                                {% if form.supplier.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.supplier.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Select the supplier for this purchase order</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.expected_delivery.id_for_label }}" class="form-label">
+                                    Expected Delivery <span class="text-danger">*</span>
+                                </label>
+                                {{ form.expected_delivery }}
+                                {% if form.expected_delivery.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.expected_delivery.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Expected delivery date from supplier</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if form.instance.pk %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Order Status</label>
+                                <div>
+                                    <span class="badge 
+                                        {% if form.instance.status == 'draft' %}bg-secondary
+                                        {% elif form.instance.status == 'ordered' %}bg-info
+                                        {% elif form.instance.status == 'received' %}bg-success
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ form.instance.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Order Date</label>
+                                <div class="form-control-plaintext">
+                                    {{ form.instance.order_date|date:"M d, Y H:i" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <hr class="my-4">
+
+                    <!-- Order Items Section -->
+                    <h6 class="mb-3">
+                        <i class="fas fa-boxes"></i> Order Items
+                    </h6>
+                    
+                    <div id="orderItems">
+                        {% if form.instance.pk and form.instance.items.exists %}
+                            <!-- Existing items for editing -->
+                            {% for item in form.instance.items.all %}
+                            <div class="card mb-3 order-item" data-item-id="{{ item.id }}">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <label class="form-label">Product</label>
+                                            <select class="form-select product-select" name="items-{{ forloop.counter0 }}-product" required>
+                                                <option value="">Select Product</option>
+                                                {% for product in products %}
+                                                <option value="{{ product.id }}" 
+                                                    {% if item.product.id == product.id %}selected{% endif %}
+                                                    data-cost="{{ product.cost_price }}">
+                                                    {{ product.name }} (Stock: {{ product.current_stock }})
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Quantity</label>
+                                            <input type="number" class="form-control quantity-input" 
+                                                   name="items-{{ forloop.counter0 }}-quantity" 
+                                                   value="{{ item.quantity|floatformat:3 }}" 
+                                                   step="0.001" min="0.001" required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Unit Cost ($)</label>
+                                            <input type="number" class="form-control cost-input" 
+                                                   name="items-{{ forloop.counter0 }}-unit_cost" 
+                                                   value="{{ item.unit_cost|floatformat:2 }}" 
+                                                   step="0.01" min="0" required>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Total</label>
+                                            <div class="form-control-plaintext total-display text-end">
+                                                $<span class="item-total">{{ item.total_cost|floatformat:2 }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="items-{{ forloop.counter0 }}-id" value="{{ item.id }}">
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <!-- New item template -->
+                            <div class="card mb-3 order-item">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <label class="form-label">Product</label>
+                                            <select class="form-select product-select" name="items-0-product" required>
+                                                <option value="">Select Product</option>
+                                                {% for product in products %}
+                                                <option value="{{ product.id }}" data-cost="{{ product.cost_price }}">
+                                                    {{ product.name }} (Stock: {{ product.current_stock }})
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Quantity</label>
+                                            <input type="number" class="form-control quantity-input" 
+                                                   name="items-0-quantity" value="1" 
+                                                   step="0.001" min="0.001" required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Unit Cost ($)</label>
+                                            <input type="number" class="form-control cost-input" 
+                                                   name="items-0-unit_cost" value="0.00" 
+                                                   step="0.01" min="0" required>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Total</label>
+                                            <div class="form-control-plaintext total-display text-end">
+                                                $<span class="item-total">0.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="items-0-id" value="">
+                                </div>
+                                <div class="card-footer py-2">
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                                        <i class="fas fa-trash"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Add Item Button -->
+                    <div class="mb-4">
+                        <button type="button" class="btn btn-outline-primary" id="addItem">
+                            <i class="fas fa-plus"></i> Add Another Item
+                        </button>
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="row">
+                        <div class="col-md-6 offset-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Order Summary</h6>
+                                    <table class="table table-sm table-borderless mb-0">
+                                        <tr>
+                                            <td>Subtotal:</td>
+                                            <td class="text-end">$<span id="orderSubtotal">0.00</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Tax (10%):</td>
+                                            <td class="text-end">$<span id="orderTax">0.00</span></td>
+                                        </tr>
+                                        <tr class="border-top">
+                                            <td><strong>Total Amount:</strong></td>
+                                            <td class="text-end"><strong>$<span id="orderTotal">0.00</span></strong></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'purchase-order-list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Orders
+                        </a>
+                        <div class="btn-group">
+                            {% if form.instance.pk and form.instance.status == 'draft' %}
+                            <button type="submit" name="save_draft" class="btn btn-outline-primary">
+                                <i class="fas fa-save"></i> Update Draft
+                            </button>
+                            <button type="submit" name="place_order" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Place Order
+                            </button>
+                            {% elif not form.instance.pk %}
+                            <button type="submit" name="save_draft" class="btn btn-outline-primary">
+                                <i class="fas fa-save"></i> Save Draft
+                            </button>
+                            <button type="submit" name="place_order" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Create & Place Order
+                            </button>
+                            {% else %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Order
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Help -->
+    <div class="col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Purchase Order Guide</h6>
+            </div>
+            <div class="card-body">
+                <h6>Creating Purchase Orders:</h6>
+                <ul class="small">
+                    <li>Select the supplier you're ordering from</li>
+                    <li>Set realistic expected delivery dates</li>
+                    <li>Use current cost prices for accurate costing</li>
+                    <li>Add all items needed in a single order</li>
+                </ul>
+
+                <h6>Order Status:</h6>
+                <ul class="small">
+                    <li><span class="badge bg-secondary">Draft</span> - Still being prepared</li>
+                    <li><span class="badge bg-info">Ordered</span> - Sent to supplier</li>
+                    <li><span class="badge bg-success">Received</span> - Items delivered</li>
+                    <li><span class="badge bg-danger">Cancelled</span> - Order cancelled</li>
+                </ul>
+
+                <h6>Best Practices:</h6>
+                <ul class="small">
+                    <li>Review stock levels before ordering</li>
+                    <li>Consider lead times from suppliers</li>
+                    <li>Verify quantities and costs before placing order</li>
+                    <li>Update status when items are received</li>
+                </ul>
+
+                {% if form.instance.pk %}
+                <hr>
+                <div class="small text-muted">
+                    <p><strong>Created:</strong> {{ form.instance.order_date|date:"M d, Y H:i" }}</p>
+                    <p><strong>Last Updated:</strong> {{ form.instance.updated_at|default:"Not available" }}</p>
+                    {% if form.instance.expected_delivery %}
+                    <p><strong>Days Until Delivery:</strong> 
+                        <span class="{% if form.instance.is_overdue %}text-danger{% else %}text-success{% endif %}">
+                            {{ form.instance.days_until_delivery }}
+                        </span>
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Supplier Info -->
+        <div class="card shadow mt-3">
+            <div class="card-header bg-warning">
+                <h6 class="mb-0"><i class="fas fa-truck"></i> Supplier Information</h6>
+            </div>
+            <div class="card-body">
+                <div id="supplierInfo" class="text-center">
+                    <p class="text-muted">Select a supplier to view details</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Item Template for JavaScript -->
+<template id="itemTemplate">
+    <div class="card mb-3 order-item">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-5">
+                    <label class="form-label">Product</label>
+                    <select class="form-select product-select" name="items-__prefix__-product" required>
+                        <option value="">Select Product</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}" data-cost="{{ product.cost_price }}">
+                            {{ product.name }} (Stock: {{ product.current_stock }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" class="form-control quantity-input" 
+                           name="items-__prefix__-quantity" value="1" 
+                           step="0.001" min="0.001" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Unit Cost ($)</label>
+                    <input type="number" class="form-control cost-input" 
+                           name="items-__prefix__-unit_cost" value="0.00" 
+                           step="0.01" min="0" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Total</label>
+                    <div class="form-control-plaintext total-display text-end">
+                        $<span class="item-total">0.00</span>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" name="items-__prefix__-id" value="">
+        </div>
+        <div class="card-footer py-2">
+            <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                <i class="fas fa-trash"></i> Remove
+            </button>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_scripts %}
+
+
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+        font-weight: 600;
+    }
+    
+    .order-item {
+        border: 1px solid #e3f2fd;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .order-item:hover {
+        border-color: #bbdefb;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .total-display {
+        font-weight: 600;
+        color: #2e7d32;
+    }
+    
+    .btn {
+        border-radius: 6px;
+    }
+    
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+</style>
+{% endblock %}

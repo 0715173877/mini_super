@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CarlPos - Point of Sale System{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c5aa0;
+            --primary-dark: #1e3a8a;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --sidebar-width: 280px;
+            --topbar-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Layout Container */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .app-sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            transition: all 0.3s ease;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            color: white;
+            text-decoration: none;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+            flex: 1;
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            padding: 0 1rem 0.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+        }
+
+        .nav-items {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            margin: 0.25rem 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left: 4px solid var(--info);
+        }
+
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .nav-badge {
+            background: var(--info);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: auto;
+        }
+
+        /* Main Content Area */
+        .app-main {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Topbar Styles */
+        .app-topbar {
+            height: var(--topbar-height);
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: var(--dark);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--light);
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin: 0;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .topbar-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .topbar-item:hover {
+            background: var(--light);
+        }
+
+        .notification-badge {
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: -2px;
+            right: -2px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--info));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        .user-role {
+            font-size: 0.8rem;
+            color: var(--secondary);
+        }
+
+        /* Content Area */
+        .app-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-x: auto;
+        }
+
+        .content-header {
+            margin-bottom: 2rem;
+        }
+
+        .content-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .content-subtitle {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            margin-bottom: 0;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px 12px 0 0 !important;
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: var(--dark);
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        /* Messages */
+        .alert {
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .app-sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+
+            .app-sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .app-main {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
+
+            .app-content {
+                padding: 1rem;
+            }
+
+            .content-title {
+                font-size: 1.5rem;
+            }
+
+            .topbar-right .user-info {
+                display: none;
+            }
+        }
+
+        /* Scrollbar Styling */
+        .app-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .app-sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .app-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .app-sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <a href="{% url 'dashboard' %}" class="brand-logo">
+                    <div class="brand-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    CarlPos
+                </a>
+            </div>
+
+            <div class="sidebar-nav">
+                <!-- Main Navigation -->
+                <div class="nav-section">
+                    <div class="section-title">Main</div>
+                    <ul class="nav-items">
+                        <li class="nav-item">
+                            <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                                <i class="fas fa-tachometer-alt nav-icon"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'point-of-sale' %}" class="nav-link {% if request.resolver_match.url_name == 'point-of-sale' %}active{% endif %}">
+                                <i class="fas fa-cash-register nav-icon"></i>
+                                Point of Sale
+                                <span class="nav-badge">Live</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Inventory Management -->
+                <div class="nav-section">
+                    <div class="section-title">Inventory</div>
+                    <ul class="nav-items">
+                        <li class="nav-item">
+                            <a href="{% url 'product-list' %}" class="nav-link {% if 'product' in request.resolver_match.url_name and 'detail' not in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-boxes nav-icon"></i>
+                                Products
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'category-list' %}" class="nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-tags nav-icon"></i>
+                                Categories
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'supplier-list' %}" class="nav-link {% if 'supplier' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-truck nav-icon"></i>
+                                Suppliers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'purchase-order-list' %}" class="nav-link {% if 'purchase-order' in request.resolver_match.url_name and 'detail' not in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-file-invoice nav-icon"></i>
+                                Purchase Orders
+                                <span class="nav-badge" id="pendingOrdersCount">0</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'low-stock' %}" class="nav-link {% if 'low-stock' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-exclamation-triangle nav-icon"></i>
+                                Low Stock Alert
+                                <span class="nav-badge" id="lowStockCount">0</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Sales & Reports -->
+                <div class="nav-section">
+                    <div class="section-title">Sales & Reports</div>
+                    <ul class="nav-items">
+                        <li class="nav-item">
+                            <a href="{% url 'sale-list' %}" class="nav-link {% if 'sale' in request.resolver_match.url_name and 'detail' not in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-receipt nav-icon"></i>
+                                Sales History
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'daily-reports' %}" class="nav-link {% if 'report' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-chart-line nav-icon"></i>
+                                Daily Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'customer-analytics' %}" class="nav-link {% if 'customer' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-users nav-icon"></i>
+                                Customers
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Operations -->
+                <div class="nav-section">
+                    <div class="section-title">Operations</div>
+                    <ul class="nav-items">
+                        <li class="nav-item">
+                            <a href="{% url 'waste-tracking' %}" class="nav-link {% if 'waste' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-trash nav-icon"></i>
+                                Waste Tracking
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'staff-scheduling' %}" class="nav-link {% if 'staff' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-user-clock nav-icon"></i>
+                                Staff Scheduling
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'performance-metrics' %}" class="nav-link {% if 'performance' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-chart-pie nav-icon"></i>
+                                Performance
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                 <!-- Reports -->
+                 <div class="nav-section">
+                    <div class="section-title">Reports</div>
+                    <ul class="nav-items">
+                        <li class="nav-item">
+                            <a href="{% url 'sales_report_new' %}" class="nav-link {% if 'sales_report_new' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-trash nav-icon"></i>
+                                Sales 
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'inventory_report' %}" class="nav-link {% if 'inventory_report' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-user-clock nav-icon"></i>
+                                Inventory
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'analytics' %}" class="nav-link {% if 'analytics' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-chart-pie nav-icon"></i>
+                                Analytics
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- System -->
+                <div class="nav-section">
+                    <div class="section-title">System</div>
+                    <ul class="nav-items">
+                        <li class="nav-item">
+                            <a href="{% url 'admin:index' %}" class="nav-link">
+                                <i class="fas fa-cog nav-icon"></i>
+                                Admin Panel
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <!-- <button type="submit" class="btn btn-link">Logout</button> -->
+                                <button type="submit" class="nav-link">
+                                    <i class="fas fa-sign-out-alt nav-icon"></i>
+                                    Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="app-main">
+            <!-- Topbar -->
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+
+                <div class="topbar-right">
+                    <!-- Notifications -->
+                    <div class="topbar-item">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </div>
+
+                    <!-- User Profile -->
+                    <div class="topbar-item user-profile">
+                        <div class="user-avatar">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <div class="user-info">
+                            <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+                            <span class="user-role">Administrator</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="app-content">
+                <!-- Content Header -->
+                <div class="content-header">
+                    <h1 class="content-title">{% block content_title %}{% endblock %}</h1>
+                    <p class="content-subtitle">{% block content_subtitle %}{% endblock %}</p>
+                </div>
+
+                <!-- Messages -->
+                {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fas 
+                                {% if message.tags == 'success' %}fa-check-circle
+                                {% elif message.tags == 'error' %}fa-exclamation-circle
+                                {% elif message.tags == 'warning' %}fa-exclamation-triangle
+                                {% else %}fa-info-circle{% endif %} 
+                                me-2"></i>
+                            {{ message }}
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Page Content -->
+                {% block content %}
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" style="display: none;"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mobile sidebar toggle
+        const sidebar = document.getElementById('appSidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('mobile-open');
+            sidebarOverlay.style.display = sidebar.classList.contains('mobile-open') ? 'block' : 'none';
+            document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
+        });
+
+        sidebarOverlay.addEventListener('click', function() {
+            sidebar.classList.remove('mobile-open');
+            this.style.display = 'none';
+            document.body.style.overflow = '';
+        });
+
+        // Close sidebar when clicking on a link (mobile)
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('mobile-open');
+                    sidebarOverlay.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+
+        // Update navigation counts
+        function updateNavigationCounts() {
+            // Demo counts - replace with actual API calls
+            document.getElementById('lowStockCount').textContent = Math.floor(Math.random() * 10) + 1;
+            document.getElementById('pendingOrdersCount').textContent = Math.floor(Math.random() * 5) + 1;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateNavigationCounts();
+            
+            // Auto-hide alerts after 5 seconds
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('mobile-open');
+                sidebarOverlay.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        });
+    </script>
+
+    {% block extra_scripts %}
+    {% endblock %}
+</body>
+</html>

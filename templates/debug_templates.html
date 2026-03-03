@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Template Debug</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Template Configuration Debug</h1>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h3>BASE_DIR: {{ base_dir }}</h3>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h3>Template Directories</h3>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Directory</th>
+                            <th>Exists</th>
+                            <th>Login Path</th>
+                            <th>Login Exists</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dir_info in template_dirs %}
+                        <tr>
+                            <td>{{ dir_info.directory }}</td>
+                            <td>
+                                <span class="badge {% if dir_info.exists %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ dir_info.exists }}
+                                </span>
+                            </td>
+                            <td>{{ dir_info.login_path }}</td>
+                            <td>
+                                <span class="badge {% if dir_info.login_exists %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ dir_info.login_exists }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h3>Installed Apps</h3>
+            </div>
+            <div class="card-body">
+                <ul>
+                    {% for app in installed_apps %}
+                    <li>{{ app }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

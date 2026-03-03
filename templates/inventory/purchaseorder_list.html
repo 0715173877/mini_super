@@ -1,0 +1,553 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Purchase Orders - POS.CarlKasa{% endblock %}
+
+{% block page_title %}Purchase Orders{% endblock %}
+
+{% block content_title %}Purchase Order Management{% endblock %}
+{% block content_subtitle %}Track and manage your inventory orders from suppliers{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Order Filters</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="status_filter" class="form-label">Order Status</label>
+                        <select class="form-select" id="status_filter" name="status">
+                            <option value="">All Statuses</option>
+                            <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                            <option value="ordered" {% if status_filter == 'ordered' %}selected{% endif %}>Ordered</option>
+                            <option value="received" {% if status_filter == 'received' %}selected{% endif %}>Received</option>
+                            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="supplier_filter" class="form-label">Supplier</label>
+                        <select class="form-select" id="supplier_filter" name="supplier">
+                            <option value="">All Suppliers</option>
+                            {% for supplier in suppliers %}
+                            <option value="{{ supplier.id }}" {% if selected_supplier == supplier.id %}selected{% endif %}>
+                                {{ supplier.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date_from" class="form-label">From Date</label>
+                        <input type="date" class="form-control" id="date_from" name="date_from" 
+                               value="{{ date_from|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date_to" class="form-label">To Date</label>
+                        <input type="date" class="form-control" id="date_to" name="date_to"
+                               value="{{ date_to|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               placeholder="Search by order ID, supplier..." value="{{ search_query }}">
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="btn-group w-100">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Apply Filters
+                            </button>
+                            <a href="{% url 'purchase-order-list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Clear
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_orders }}</h4>
+                        <p class="mb-0">Total Orders</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-invoice fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ draft_orders }}</h4>
+                        <p class="mb-0">Draft</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-edit fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ ordered_orders }}</h4>
+                        <p class="mb-0">Ordered</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-paper-plane fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ received_orders }}</h4>
+                        <p class="mb-0">Received</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ cancelled_orders }}</h4>
+                        <p class="mb-0">Cancelled</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-times-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card bg-secondary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>${{ total_order_value|floatformat:2 }}</h4>
+                        <p class="mb-0">Total Value</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-dollar-sign fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Orders Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list"></i> Purchase Orders
+                    {% if status_filter or selected_supplier or search_query %}
+                    <small class="text-muted">(Filtered Results)</small>
+                    {% endif %}
+                </h5>
+                <div class="btn-group">
+                    <a href="{% url 'purchase-order-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> New Purchase Order
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="10%">Order #</th>
+                                <th width="15%">Supplier</th>
+                                <th width="12%">Order Date</th>
+                                <th width="12%">Expected Delivery</th>
+                                <th width="10%" class="text-center">Items</th>
+                                <th width="12%" class="text-end">Total Amount</th>
+                                <th width="12%" class="text-center">Status</th>
+                                <th width="17%" class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in purchase_orders %}
+                            <tr class="{% if order.status == 'cancelled' %}table-danger{% elif order.status == 'received' %}table-success{% elif order.status == 'draft' %}table-info{% endif %}">
+                                <td>
+                                    <strong>PO-{{ order.id|stringformat:"06d" }}</strong>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-truck text-muted me-2"></i>
+                                        </div>
+                                        <div class="flex-grow-1 ms-2">
+                                            <strong>{{ order.supplier.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ order.supplier.contact_person }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {{ order.order_date|date:"M d, Y" }}
+                                    <br>
+                                    <small class="text-muted">{{ order.order_date|timesince }} ago</small>
+                                </td>
+                                <td>
+                                    {% if order.expected_delivery %}
+                                        <span class="{% if order.is_overdue %}text-danger{% elif order.is_upcoming %}text-warning{% else %}text-success{% endif %}">
+                                            {{ order.expected_delivery|date:"M d, Y" }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            {% if order.days_until_delivery == 0 %}
+                                                Today
+                                            {% elif order.days_until_delivery > 0 %}
+                                                In {{ order.days_until_delivery }} days
+                                            {% else %}
+                                                {{ order.days_overdue }} days ago
+                                            {% endif %}
+                                        </small>
+                                    {% else %}
+                                        <span class="text-muted">Not set</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary rounded-pill">{{ order.items.count }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <strong class="text-success">${{ order.total_amount|floatformat:2 }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge 
+                                        {% if order.status == 'draft' %}bg-secondary
+                                        {% elif order.status == 'ordered' %}bg-info
+                                        {% elif order.status == 'received' %}bg-success
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                    {% if order.is_overdue %}
+                                    <br>
+                                    <small class="text-danger">Overdue</small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'purchase-order-detail' order.pk %}" class="btn btn-outline-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if order.status == 'draft' %}
+                                        <a href="{% url 'purchase-order-update' order.pk %}" class="btn btn-outline-secondary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button class="btn btn-outline-success" 
+                                                onclick="markAsOrdered({{ order.id }})"
+                                                title="Mark as Ordered">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                        {% elif order.status == 'ordered' %}
+                                        <button class="btn btn-outline-success" 
+                                                onclick="markAsReceived({{ order.id }})"
+                                                title="Mark as Received">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        {% endif %}
+                                        {% if order.status != 'received' and order.status != 'cancelled' %}
+                                        <button class="btn btn-outline-danger" 
+                                                onclick="cancelOrder({{ order.id }})"
+                                                title="Cancel Order">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fas fa-file-invoice fa-3x mb-3"></i>
+                                        <h4>No purchase orders found</h4>
+                                        <p>
+                                            {% if status_filter or selected_supplier or search_query %}
+                                            No orders match your current filters.
+                                            {% else %}
+                                            Get started by creating your first purchase order.
+                                            {% endif %}
+                                        </p>
+                                        <a href="{% url 'purchase-order-create' %}" class="btn btn-primary">
+                                            <i class="fas fa-plus"></i> Create Purchase Order
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if purchase_orders.paginator.num_pages > 1 %}
+<nav aria-label="Purchase orders pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if purchase_orders.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_supplier %}&supplier={{ selected_supplier }}{% endif %}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                First
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ purchase_orders.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_supplier %}&supplier={{ selected_supplier }}{% endif %}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                Previous
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in purchase_orders.paginator.page_range %}
+            {% if purchase_orders.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > purchase_orders.number|add:'-3' and num < purchase_orders.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_supplier %}&supplier={{ selected_supplier }}{% endif %}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if purchase_orders.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ purchase_orders.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_supplier %}&supplier={{ selected_supplier }}{% endif %}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                Next
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ purchase_orders.paginator.num_pages }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_supplier %}&supplier={{ selected_supplier }}{% endif %}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                Last
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+    
+    <div class="text-center text-muted small mt-2">
+        Page {{ purchase_orders.number }} of {{ purchase_orders.paginator.num_pages }}
+        {% if purchase_orders.paginator.count %}
+        • {{ purchase_orders.paginator.count }} total orders
+        {% endif %}
+    </div>
+</nav>
+{% endif %}
+
+<!-- Action Modals -->
+<div class="modal fade" id="actionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="actionModalTitle">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="actionModalBody">
+                Are you sure you want to perform this action?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" id="actionForm" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary" id="actionButton">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let currentOrderId = null;
+
+    function markAsOrdered(orderId) {
+        currentOrderId = orderId;
+        document.getElementById('actionModalTitle').textContent = 'Mark as Ordered';
+        document.getElementById('actionModalBody').textContent = 'Are you sure you want to mark this purchase order as ordered? This will update the order status.';
+        document.getElementById('actionForm').action = `{% url 'purchase-order-mark-ordered' 0 %}`.replace('0', orderId);
+        new bootstrap.Modal(document.getElementById('actionModal')).show();
+    }
+
+    function markAsReceived(orderId) {
+        currentOrderId = orderId;
+        document.getElementById('actionModalTitle').textContent = 'Mark as Received';
+        document.getElementById('actionModalBody').innerHTML = `
+            <p>Are you sure you want to mark this purchase order as received?</p>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> This will update stock levels for all items in the order.
+            </div>
+        `;
+        document.getElementById('actionForm').action = `{% url 'purchase-order-receive' 0 %}`.replace('0', orderId);
+        new bootstrap.Modal(document.getElementById('actionModal')).show();
+    }
+
+    function cancelOrder(orderId) {
+        currentOrderId = orderId;
+        document.getElementById('actionModalTitle').textContent = 'Cancel Order';
+        document.getElementById('actionModalBody').innerHTML = `
+            <p>Are you sure you want to cancel this purchase order?</p>
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> This action cannot be undone.
+            </div>
+        `;
+        document.getElementById('actionForm').action = `{% url 'purchase-order-cancel' 0 %}`.replace('0', orderId);
+        new bootstrap.Modal(document.getElementById('actionModal')).show();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-set date range if not set
+        const dateFrom = document.getElementById('date_from');
+        const dateTo = document.getElementById('date_to');
+        
+        if (!dateFrom.value) {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            dateFrom.value = thirtyDaysAgo.toISOString().split('T')[0];
+        }
+        
+        if (!dateTo.value) {
+            const today = new Date();
+            dateTo.value = today.toISOString().split('T')[0];
+        }
+
+        // Add row hover effects
+        const tableRows = document.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                if (!this.classList.contains('table-danger') && 
+                    !this.classList.contains('table-success') && 
+                    !this.classList.contains('table-info')) {
+                    this.style.backgroundColor = '#f8f9fa';
+                }
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                if (!this.classList.contains('table-danger') && 
+                    !this.classList.contains('table-success') && 
+                    !this.classList.contains('table-info')) {
+                    this.style.backgroundColor = '';
+                }
+            });
+            
+            // Make row clickable to view details
+            row.addEventListener('click', function(e) {
+                if (!e.target.closest('.btn-group') && !e.target.closest('a')) {
+                    const viewLink = this.querySelector('a[href*="purchase-order-detail"]');
+                    if (viewLink) {
+                        window.location.href = viewLink.href;
+                    }
+                }
+            });
+        });
+
+        // Quick status filter buttons
+        const statusButtons = document.querySelectorAll('.status-filter-btn');
+        statusButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                document.getElementById('status_filter').value = this.dataset.status;
+                document.querySelector('form').submit();
+            });
+        });
+    });
+
+    // Quick actions for demonstration
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    }
+</script>
+
+<style>
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        font-size: 0.875rem;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    .pagination .page-link {
+        border-radius: 5px;
+        margin: 0 2px;
+    }
+    
+    .badge {
+        font-size: 0.75em;
+    }
+    
+    .table-hover tbody tr:hover {
+        cursor: pointer;
+    }
+    
+    @media (max-width: 768px) {
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.8rem;
+        }
+    }
+</style>
+{% endblock %}
