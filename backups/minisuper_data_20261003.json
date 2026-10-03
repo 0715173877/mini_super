@@ -1,0 +1,2427 @@
+[
+{
+  "model": "auth.group",
+  "pk": 1,
+  "fields": {
+    "name": "Owner",
+    "permissions": [
+      [
+        "view_group",
+        "auth",
+        "group"
+      ],
+      [
+        "add_user",
+        "auth",
+        "user"
+      ],
+      [
+        "change_user",
+        "auth",
+        "user"
+      ],
+      [
+        "view_user",
+        "auth",
+        "user"
+      ],
+      [
+        "change_sitesettings",
+        "core",
+        "sitesettings"
+      ],
+      [
+        "view_sitesettings",
+        "core",
+        "sitesettings"
+      ],
+      [
+        "add_category",
+        "inventory",
+        "category"
+      ],
+      [
+        "change_category",
+        "inventory",
+        "category"
+      ],
+      [
+        "delete_category",
+        "inventory",
+        "category"
+      ],
+      [
+        "view_category",
+        "inventory",
+        "category"
+      ],
+      [
+        "add_product",
+        "inventory",
+        "product"
+      ],
+      [
+        "change_product",
+        "inventory",
+        "product"
+      ],
+      [
+        "delete_product",
+        "inventory",
+        "product"
+      ],
+      [
+        "view_product",
+        "inventory",
+        "product"
+      ],
+      [
+        "add_purchaseorder",
+        "inventory",
+        "purchaseorder"
+      ],
+      [
+        "change_purchaseorder",
+        "inventory",
+        "purchaseorder"
+      ],
+      [
+        "delete_purchaseorder",
+        "inventory",
+        "purchaseorder"
+      ],
+      [
+        "view_purchaseorder",
+        "inventory",
+        "purchaseorder"
+      ],
+      [
+        "add_purchaseorderitem",
+        "inventory",
+        "purchaseorderitem"
+      ],
+      [
+        "change_purchaseorderitem",
+        "inventory",
+        "purchaseorderitem"
+      ],
+      [
+        "delete_purchaseorderitem",
+        "inventory",
+        "purchaseorderitem"
+      ],
+      [
+        "view_purchaseorderitem",
+        "inventory",
+        "purchaseorderitem"
+      ],
+      [
+        "add_stockmovement",
+        "inventory",
+        "stockmovement"
+      ],
+      [
+        "view_stockmovement",
+        "inventory",
+        "stockmovement"
+      ],
+      [
+        "add_supplier",
+        "inventory",
+        "supplier"
+      ],
+      [
+        "change_supplier",
+        "inventory",
+        "supplier"
+      ],
+      [
+        "delete_supplier",
+        "inventory",
+        "supplier"
+      ],
+      [
+        "view_supplier",
+        "inventory",
+        "supplier"
+      ],
+      [
+        "add_supplierreturn",
+        "inventory",
+        "supplierreturn"
+      ],
+      [
+        "change_supplierreturn",
+        "inventory",
+        "supplierreturn"
+      ],
+      [
+        "delete_supplierreturn",
+        "inventory",
+        "supplierreturn"
+      ],
+      [
+        "view_supplierreturn",
+        "inventory",
+        "supplierreturn"
+      ],
+      [
+        "add_supplierreturnitem",
+        "inventory",
+        "supplierreturnitem"
+      ],
+      [
+        "change_supplierreturnitem",
+        "inventory",
+        "supplierreturnitem"
+      ],
+      [
+        "delete_supplierreturnitem",
+        "inventory",
+        "supplierreturnitem"
+      ],
+      [
+        "view_supplierreturnitem",
+        "inventory",
+        "supplierreturnitem"
+      ],
+      [
+        "add_peakhour",
+        "operations",
+        "peakhour"
+      ],
+      [
+        "change_peakhour",
+        "operations",
+        "peakhour"
+      ],
+      [
+        "delete_peakhour",
+        "operations",
+        "peakhour"
+      ],
+      [
+        "view_peakhour",
+        "operations",
+        "peakhour"
+      ],
+      [
+        "add_shift",
+        "operations",
+        "shift"
+      ],
+      [
+        "change_shift",
+        "operations",
+        "shift"
+      ],
+      [
+        "delete_shift",
+        "operations",
+        "shift"
+      ],
+      [
+        "view_shift",
+        "operations",
+        "shift"
+      ],
+      [
+        "add_staff",
+        "operations",
+        "staff"
+      ],
+      [
+        "change_staff",
+        "operations",
+        "staff"
+      ],
+      [
+        "delete_staff",
+        "operations",
+        "staff"
+      ],
+      [
+        "view_staff",
+        "operations",
+        "staff"
+      ],
+      [
+        "add_supplierperformance",
+        "operations",
+        "supplierperformance"
+      ],
+      [
+        "change_supplierperformance",
+        "operations",
+        "supplierperformance"
+      ],
+      [
+        "delete_supplierperformance",
+        "operations",
+        "supplierperformance"
+      ],
+      [
+        "view_supplierperformance",
+        "operations",
+        "supplierperformance"
+      ],
+      [
+        "add_wasterecord",
+        "operations",
+        "wasterecord"
+      ],
+      [
+        "change_wasterecord",
+        "operations",
+        "wasterecord"
+      ],
+      [
+        "delete_wasterecord",
+        "operations",
+        "wasterecord"
+      ],
+      [
+        "view_wasterecord",
+        "operations",
+        "wasterecord"
+      ],
+      [
+        "add_customer",
+        "sales",
+        "customer"
+      ],
+      [
+        "change_customer",
+        "sales",
+        "customer"
+      ],
+      [
+        "delete_customer",
+        "sales",
+        "customer"
+      ],
+      [
+        "view_customer",
+        "sales",
+        "customer"
+      ],
+      [
+        "add_customerreturn",
+        "sales",
+        "customerreturn"
+      ],
+      [
+        "change_customerreturn",
+        "sales",
+        "customerreturn"
+      ],
+      [
+        "view_customerreturn",
+        "sales",
+        "customerreturn"
+      ],
+      [
+        "add_customerreturnitem",
+        "sales",
+        "customerreturnitem"
+      ],
+      [
+        "change_customerreturnitem",
+        "sales",
+        "customerreturnitem"
+      ],
+      [
+        "view_customerreturnitem",
+        "sales",
+        "customerreturnitem"
+      ],
+      [
+        "view_dailysummary",
+        "sales",
+        "dailysummary"
+      ],
+      [
+        "add_sale",
+        "sales",
+        "sale"
+      ],
+      [
+        "change_sale",
+        "sales",
+        "sale"
+      ],
+      [
+        "delete_sale",
+        "sales",
+        "sale"
+      ],
+      [
+        "view_sale",
+        "sales",
+        "sale"
+      ],
+      [
+        "add_saleitem",
+        "sales",
+        "saleitem"
+      ],
+      [
+        "view_saleitem",
+        "sales",
+        "saleitem"
+      ]
+    ]
+  }
+},
+{
+  "model": "auth.group",
+  "pk": 2,
+  "fields": {
+    "name": "Sell",
+    "permissions": [
+      [
+        "add_customer",
+        "sales",
+        "customer"
+      ],
+      [
+        "change_customer",
+        "sales",
+        "customer"
+      ],
+      [
+        "delete_customer",
+        "sales",
+        "customer"
+      ],
+      [
+        "view_customer",
+        "sales",
+        "customer"
+      ],
+      [
+        "add_customerreturn",
+        "sales",
+        "customerreturn"
+      ],
+      [
+        "change_customerreturn",
+        "sales",
+        "customerreturn"
+      ],
+      [
+        "view_customerreturn",
+        "sales",
+        "customerreturn"
+      ],
+      [
+        "add_customerreturnitem",
+        "sales",
+        "customerreturnitem"
+      ],
+      [
+        "change_customerreturnitem",
+        "sales",
+        "customerreturnitem"
+      ],
+      [
+        "view_customerreturnitem",
+        "sales",
+        "customerreturnitem"
+      ],
+      [
+        "view_dailysummary",
+        "sales",
+        "dailysummary"
+      ],
+      [
+        "add_sale",
+        "sales",
+        "sale"
+      ],
+      [
+        "change_sale",
+        "sales",
+        "sale"
+      ],
+      [
+        "delete_sale",
+        "sales",
+        "sale"
+      ],
+      [
+        "view_sale",
+        "sales",
+        "sale"
+      ],
+      [
+        "add_saleitem",
+        "sales",
+        "saleitem"
+      ],
+      [
+        "view_saleitem",
+        "sales",
+        "saleitem"
+      ]
+    ]
+  }
+},
+{
+  "model": "auth.group",
+  "pk": 3,
+  "fields": {
+    "name": "Stock",
+    "permissions": [
+      [
+        "add_category",
+        "inventory",
+        "category"
+      ],
+      [
+        "change_category",
+        "inventory",
+        "category"
+      ],
+      [
+        "delete_category",
+        "inventory",
+        "category"
+      ],
+      [
+        "view_category",
+        "inventory",
+        "category"
+      ],
+      [
+        "add_product",
+        "inventory",
+        "product"
+      ],
+      [
+        "change_product",
+        "inventory",
+        "product"
+      ],
+      [
+        "delete_product",
+        "inventory",
+        "product"
+      ],
+      [
+        "view_product",
+        "inventory",
+        "product"
+      ],
+      [
+        "add_purchaseorder",
+        "inventory",
+        "purchaseorder"
+      ],
+      [
+        "change_purchaseorder",
+        "inventory",
+        "purchaseorder"
+      ],
+      [
+        "delete_purchaseorder",
+        "inventory",
+        "purchaseorder"
+      ],
+      [
+        "view_purchaseorder",
+        "inventory",
+        "purchaseorder"
+      ],
+      [
+        "add_purchaseorderitem",
+        "inventory",
+        "purchaseorderitem"
+      ],
+      [
+        "change_purchaseorderitem",
+        "inventory",
+        "purchaseorderitem"
+      ],
+      [
+        "delete_purchaseorderitem",
+        "inventory",
+        "purchaseorderitem"
+      ],
+      [
+        "view_purchaseorderitem",
+        "inventory",
+        "purchaseorderitem"
+      ],
+      [
+        "add_stockmovement",
+        "inventory",
+        "stockmovement"
+      ],
+      [
+        "view_stockmovement",
+        "inventory",
+        "stockmovement"
+      ],
+      [
+        "add_supplier",
+        "inventory",
+        "supplier"
+      ],
+      [
+        "change_supplier",
+        "inventory",
+        "supplier"
+      ],
+      [
+        "delete_supplier",
+        "inventory",
+        "supplier"
+      ],
+      [
+        "view_supplier",
+        "inventory",
+        "supplier"
+      ],
+      [
+        "add_supplierreturn",
+        "inventory",
+        "supplierreturn"
+      ],
+      [
+        "change_supplierreturn",
+        "inventory",
+        "supplierreturn"
+      ],
+      [
+        "delete_supplierreturn",
+        "inventory",
+        "supplierreturn"
+      ],
+      [
+        "view_supplierreturn",
+        "inventory",
+        "supplierreturn"
+      ],
+      [
+        "add_supplierreturnitem",
+        "inventory",
+        "supplierreturnitem"
+      ],
+      [
+        "change_supplierreturnitem",
+        "inventory",
+        "supplierreturnitem"
+      ],
+      [
+        "delete_supplierreturnitem",
+        "inventory",
+        "supplierreturnitem"
+      ],
+      [
+        "view_supplierreturnitem",
+        "inventory",
+        "supplierreturnitem"
+      ],
+      [
+        "add_peakhour",
+        "operations",
+        "peakhour"
+      ],
+      [
+        "change_peakhour",
+        "operations",
+        "peakhour"
+      ],
+      [
+        "delete_peakhour",
+        "operations",
+        "peakhour"
+      ],
+      [
+        "view_peakhour",
+        "operations",
+        "peakhour"
+      ],
+      [
+        "add_shift",
+        "operations",
+        "shift"
+      ],
+      [
+        "change_shift",
+        "operations",
+        "shift"
+      ],
+      [
+        "delete_shift",
+        "operations",
+        "shift"
+      ],
+      [
+        "view_shift",
+        "operations",
+        "shift"
+      ],
+      [
+        "add_staff",
+        "operations",
+        "staff"
+      ],
+      [
+        "change_staff",
+        "operations",
+        "staff"
+      ],
+      [
+        "delete_staff",
+        "operations",
+        "staff"
+      ],
+      [
+        "view_staff",
+        "operations",
+        "staff"
+      ],
+      [
+        "add_supplierperformance",
+        "operations",
+        "supplierperformance"
+      ],
+      [
+        "change_supplierperformance",
+        "operations",
+        "supplierperformance"
+      ],
+      [
+        "delete_supplierperformance",
+        "operations",
+        "supplierperformance"
+      ],
+      [
+        "view_supplierperformance",
+        "operations",
+        "supplierperformance"
+      ],
+      [
+        "add_wasterecord",
+        "operations",
+        "wasterecord"
+      ],
+      [
+        "change_wasterecord",
+        "operations",
+        "wasterecord"
+      ],
+      [
+        "delete_wasterecord",
+        "operations",
+        "wasterecord"
+      ],
+      [
+        "view_wasterecord",
+        "operations",
+        "wasterecord"
+      ]
+    ]
+  }
+},
+{
+  "model": "auth.group",
+  "pk": 4,
+  "fields": {
+    "name": "SellerStock",
+    "permissions": [
+      [
+        "add_category",
+        "inventory",
+        "category"
+      ],
+      [
+        "change_category",
+        "inventory",
+        "category"
+      ],
+      [
+        "delete_category",
+        "inventory",
+        "category"
+      ],
+      [
+        "view_category",
+        "inventory",
+        "category"
+      ],
+      [
+        "add_product",
+        "inventory",
+        "product"
+      ],
+      [
+        "change_product",
+        "inventory",
+        "product"
+      ],
+      [
+        "delete_product",
+        "inventory",
+        "product"
+      ],
+      [
+        "view_product",
+        "inventory",
+        "product"
+      ],
+      [
+        "add_purchaseorder",
+        "inventory",
+        "purchaseorder"
+      ],
+      [
+        "change_purchaseorder",
+        "inventory",
+        "purchaseorder"
+      ],
+      [
+        "delete_purchaseorder",
+        "inventory",
+        "purchaseorder"
+      ],
+      [
+        "view_purchaseorder",
+        "inventory",
+        "purchaseorder"
+      ],
+      [
+        "add_purchaseorderitem",
+        "inventory",
+        "purchaseorderitem"
+      ],
+      [
+        "change_purchaseorderitem",
+        "inventory",
+        "purchaseorderitem"
+      ],
+      [
+        "delete_purchaseorderitem",
+        "inventory",
+        "purchaseorderitem"
+      ],
+      [
+        "view_purchaseorderitem",
+        "inventory",
+        "purchaseorderitem"
+      ],
+      [
+        "add_stockmovement",
+        "inventory",
+        "stockmovement"
+      ],
+      [
+        "view_stockmovement",
+        "inventory",
+        "stockmovement"
+      ],
+      [
+        "add_supplier",
+        "inventory",
+        "supplier"
+      ],
+      [
+        "change_supplier",
+        "inventory",
+        "supplier"
+      ],
+      [
+        "delete_supplier",
+        "inventory",
+        "supplier"
+      ],
+      [
+        "view_supplier",
+        "inventory",
+        "supplier"
+      ],
+      [
+        "add_supplierreturn",
+        "inventory",
+        "supplierreturn"
+      ],
+      [
+        "change_supplierreturn",
+        "inventory",
+        "supplierreturn"
+      ],
+      [
+        "delete_supplierreturn",
+        "inventory",
+        "supplierreturn"
+      ],
+      [
+        "view_supplierreturn",
+        "inventory",
+        "supplierreturn"
+      ],
+      [
+        "add_supplierreturnitem",
+        "inventory",
+        "supplierreturnitem"
+      ],
+      [
+        "change_supplierreturnitem",
+        "inventory",
+        "supplierreturnitem"
+      ],
+      [
+        "delete_supplierreturnitem",
+        "inventory",
+        "supplierreturnitem"
+      ],
+      [
+        "view_supplierreturnitem",
+        "inventory",
+        "supplierreturnitem"
+      ],
+      [
+        "add_peakhour",
+        "operations",
+        "peakhour"
+      ],
+      [
+        "change_peakhour",
+        "operations",
+        "peakhour"
+      ],
+      [
+        "delete_peakhour",
+        "operations",
+        "peakhour"
+      ],
+      [
+        "view_peakhour",
+        "operations",
+        "peakhour"
+      ],
+      [
+        "add_shift",
+        "operations",
+        "shift"
+      ],
+      [
+        "change_shift",
+        "operations",
+        "shift"
+      ],
+      [
+        "delete_shift",
+        "operations",
+        "shift"
+      ],
+      [
+        "view_shift",
+        "operations",
+        "shift"
+      ],
+      [
+        "add_staff",
+        "operations",
+        "staff"
+      ],
+      [
+        "change_staff",
+        "operations",
+        "staff"
+      ],
+      [
+        "delete_staff",
+        "operations",
+        "staff"
+      ],
+      [
+        "view_staff",
+        "operations",
+        "staff"
+      ],
+      [
+        "add_supplierperformance",
+        "operations",
+        "supplierperformance"
+      ],
+      [
+        "change_supplierperformance",
+        "operations",
+        "supplierperformance"
+      ],
+      [
+        "delete_supplierperformance",
+        "operations",
+        "supplierperformance"
+      ],
+      [
+        "view_supplierperformance",
+        "operations",
+        "supplierperformance"
+      ],
+      [
+        "add_wasterecord",
+        "operations",
+        "wasterecord"
+      ],
+      [
+        "change_wasterecord",
+        "operations",
+        "wasterecord"
+      ],
+      [
+        "delete_wasterecord",
+        "operations",
+        "wasterecord"
+      ],
+      [
+        "view_wasterecord",
+        "operations",
+        "wasterecord"
+      ],
+      [
+        "add_customer",
+        "sales",
+        "customer"
+      ],
+      [
+        "change_customer",
+        "sales",
+        "customer"
+      ],
+      [
+        "delete_customer",
+        "sales",
+        "customer"
+      ],
+      [
+        "view_customer",
+        "sales",
+        "customer"
+      ],
+      [
+        "add_customerreturn",
+        "sales",
+        "customerreturn"
+      ],
+      [
+        "change_customerreturn",
+        "sales",
+        "customerreturn"
+      ],
+      [
+        "view_customerreturn",
+        "sales",
+        "customerreturn"
+      ],
+      [
+        "add_customerreturnitem",
+        "sales",
+        "customerreturnitem"
+      ],
+      [
+        "change_customerreturnitem",
+        "sales",
+        "customerreturnitem"
+      ],
+      [
+        "view_customerreturnitem",
+        "sales",
+        "customerreturnitem"
+      ],
+      [
+        "view_dailysummary",
+        "sales",
+        "dailysummary"
+      ],
+      [
+        "add_sale",
+        "sales",
+        "sale"
+      ],
+      [
+        "change_sale",
+        "sales",
+        "sale"
+      ],
+      [
+        "delete_sale",
+        "sales",
+        "sale"
+      ],
+      [
+        "view_sale",
+        "sales",
+        "sale"
+      ],
+      [
+        "add_saleitem",
+        "sales",
+        "saleitem"
+      ],
+      [
+        "view_saleitem",
+        "sales",
+        "saleitem"
+      ]
+    ]
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$ugJNB5u4RS3H2agECDIIoS$kAfrPAZsr4bOipcXgmrYZ1tRlbtHrb7K0ujUR3zBQX4=",
+    "last_login": "2026-10-03T05:32:37.411Z",
+    "is_superuser": true,
+    "username": "admin",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin@example.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-10-03T05:21:59.577Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 2,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$U88mEb2jJunCX4OdAMW7UV$v/P6xITHVIInp0+toh4y7oEaAa8oRcesur31/Vw00i4=",
+    "last_login": "2026-10-03T05:33:14.458Z",
+    "is_superuser": true,
+    "username": "carl",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-10-23T07:09:37Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 3,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$d64HceIAkaiRj6zs1Amxmd$/WAvNcCGN4gWjTiO377xze10kGsACLGrHnWDtZnwLIk=",
+    "last_login": "2026-10-02T11:16:13.702Z",
+    "is_superuser": false,
+    "username": "owner",
+    "first_name": "Test",
+    "last_name": "Owner",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-10-02T11:15:50.286Z",
+    "groups": [
+      [
+        "Owner"
+      ]
+    ],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 4,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$sAl98SrLOO75VatOCOFYqq$Vi5vk0JU/g29Ar+gOjD7g6XRZSpagFT0+6cI6nM9YcM=",
+    "last_login": "2026-10-02T11:16:13.940Z",
+    "is_superuser": false,
+    "username": "sell",
+    "first_name": "Test",
+    "last_name": "Sell",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-10-02T11:15:50.392Z",
+    "groups": [
+      [
+        "Sell"
+      ]
+    ],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 5,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$6WvlsnXUxvFWdIqIBrrwJJ$OS15+Nfd3/jjlT7d+3tQgJwjQEVwJrgpuk2dHXGMFDw=",
+    "last_login": "2026-10-02T11:16:14.150Z",
+    "is_superuser": false,
+    "username": "stock",
+    "first_name": "Test",
+    "last_name": "Stock",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-10-02T11:15:50.495Z",
+    "groups": [
+      [
+        "Stock"
+      ]
+    ],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 6,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$TVmHLVF3fmEdXSrjcmCv3i$b0H15Mvy0x76McZJfozvL99LkrM2LAnPa9IHf9LUxhc=",
+    "last_login": "2026-10-02T11:16:14.374Z",
+    "is_superuser": false,
+    "username": "sellerstock",
+    "first_name": "Test",
+    "last_name": "SellerStock",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-10-02T11:15:50.599Z",
+    "groups": [
+      [
+        "SellerStock"
+      ]
+    ],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.sitesettings",
+  "pk": 1,
+  "fields": {
+    "currency": "TZS",
+    "symbol_override": "",
+    "symbol_position": "auto",
+    "decimal_places": "auto",
+    "thousands_separator": "auto",
+    "decimal_separator": "auto",
+    "updated_at": "2026-10-02T05:53:52.527Z"
+  }
+},
+{
+  "model": "inventory.category",
+  "pk": 1,
+  "fields": {
+    "name": "Fruits & Vegetables",
+    "description": ""
+  }
+},
+{
+  "model": "inventory.category",
+  "pk": 2,
+  "fields": {
+    "name": "Dairy & Eggs",
+    "description": ""
+  }
+},
+{
+  "model": "inventory.category",
+  "pk": 3,
+  "fields": {
+    "name": "Meat & Poultry",
+    "description": ""
+  }
+},
+{
+  "model": "inventory.category",
+  "pk": 4,
+  "fields": {
+    "name": "Bakery",
+    "description": ""
+  }
+},
+{
+  "model": "inventory.category",
+  "pk": 5,
+  "fields": {
+    "name": "Beverages",
+    "description": ""
+  }
+},
+{
+  "model": "inventory.category",
+  "pk": 6,
+  "fields": {
+    "name": "Snacks",
+    "description": ""
+  }
+},
+{
+  "model": "inventory.category",
+  "pk": 7,
+  "fields": {
+    "name": "Frozen Foods",
+    "description": ""
+  }
+},
+{
+  "model": "inventory.category",
+  "pk": 8,
+  "fields": {
+    "name": "Canned Goods",
+    "description": ""
+  }
+},
+{
+  "model": "inventory.category",
+  "pk": 9,
+  "fields": {
+    "name": "Personal Care",
+    "description": ""
+  }
+},
+{
+  "model": "inventory.category",
+  "pk": 10,
+  "fields": {
+    "name": "Household Supplies",
+    "description": ""
+  }
+},
+{
+  "model": "inventory.category",
+  "pk": 11,
+  "fields": {
+    "name": "Nguo",
+    "description": "Nguo"
+  }
+},
+{
+  "model": "inventory.supplier",
+  "pk": 1,
+  "fields": {
+    "name": "Fresh Farms Co.",
+    "contact_person": "Sarah Johnson",
+    "email": "sarah@freshfarms.com",
+    "phone": "",
+    "address": null,
+    "is_active": true
+  }
+},
+{
+  "model": "inventory.supplier",
+  "pk": 2,
+  "fields": {
+    "name": "City Dairy Ltd.",
+    "contact_person": "Mike Chen",
+    "email": "mike@citydairy.com",
+    "phone": "",
+    "address": null,
+    "is_active": true
+  }
+},
+{
+  "model": "inventory.supplier",
+  "pk": 3,
+  "fields": {
+    "name": "Quality Meats Inc.",
+    "contact_person": "Robert Davis",
+    "email": "robert@qualitymeats.com",
+    "phone": "",
+    "address": null,
+    "is_active": true
+  }
+},
+{
+  "model": "inventory.supplier",
+  "pk": 4,
+  "fields": {
+    "name": "Bakery Delights",
+    "contact_person": "Maria Garcia",
+    "email": "maria@bakerydelights.com",
+    "phone": "",
+    "address": null,
+    "is_active": true
+  }
+},
+{
+  "model": "inventory.supplier",
+  "pk": 5,
+  "fields": {
+    "name": "Beverage Distributors",
+    "contact_person": "Tom Wilson",
+    "email": "tom@bevdist.com",
+    "phone": "",
+    "address": null,
+    "is_active": true
+  }
+},
+{
+  "model": "inventory.product",
+  "pk": 3,
+  "fields": {
+    "name": "Shirt za 5000",
+    "sku": "SHT-001",
+    "barcode": "",
+    "category": 9,
+    "supplier": 1,
+    "product_type": "non_perishable",
+    "cost_price": "3000.00",
+    "selling_price": "5000.00",
+    "current_stock": "99.000",
+    "min_stock_level": "5.000",
+    "max_stock_level": "20.000",
+    "requires_refrigeration": false,
+    "is_high_value": false,
+    "is_high_theft_risk": false,
+    "profit_margin_display": 0
+  }
+},
+{
+  "model": "inventory.product",
+  "pk": 4,
+  "fields": {
+    "name": "shirt 7000",
+    "sku": "SHT-002",
+    "barcode": "",
+    "category": 9,
+    "supplier": 1,
+    "product_type": "non_perishable",
+    "cost_price": "5000.00",
+    "selling_price": "7000.00",
+    "current_stock": "35.000",
+    "min_stock_level": "10.000",
+    "max_stock_level": "40.000",
+    "requires_refrigeration": false,
+    "is_high_value": false,
+    "is_high_theft_risk": false,
+    "profit_margin_display": 0
+  }
+},
+{
+  "model": "inventory.product",
+  "pk": 5,
+  "fields": {
+    "name": "T-shirt",
+    "sku": "TSHT-001",
+    "barcode": "",
+    "category": 11,
+    "supplier": 1,
+    "product_type": "non_food",
+    "cost_price": "3500.00",
+    "selling_price": "5000.00",
+    "current_stock": "202.000",
+    "min_stock_level": "10.000",
+    "max_stock_level": "40.000",
+    "requires_refrigeration": false,
+    "is_high_value": false,
+    "is_high_theft_risk": false,
+    "profit_margin_display": 0
+  }
+},
+{
+  "model": "inventory.product",
+  "pk": 6,
+  "fields": {
+    "name": "Soda",
+    "sku": "PROD-001",
+    "barcode": "1234235356463",
+    "category": 5,
+    "supplier": 4,
+    "product_type": "perishable",
+    "cost_price": "900.00",
+    "selling_price": "1000.00",
+    "current_stock": "199.000",
+    "min_stock_level": "5.000",
+    "max_stock_level": "100.000",
+    "requires_refrigeration": true,
+    "is_high_value": false,
+    "is_high_theft_risk": false,
+    "profit_margin_display": 0
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 9,
+  "fields": {
+    "product": 5,
+    "movement_type": "out",
+    "quantity": "10.000",
+    "previous_stock": "40.000",
+    "new_stock": "30.000",
+    "reason": "Sale #TX20251201132929",
+    "created_at": "2025-12-01T13:29:29.601Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 10,
+  "fields": {
+    "product": 3,
+    "movement_type": "out",
+    "quantity": "5.000",
+    "previous_stock": "20.000",
+    "new_stock": "15.000",
+    "reason": "Sale #TX20251201132929",
+    "created_at": "2025-12-01T13:29:29.603Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 11,
+  "fields": {
+    "product": 4,
+    "movement_type": "out",
+    "quantity": "3.000",
+    "previous_stock": "40.000",
+    "new_stock": "37.000",
+    "reason": "Sale #TX20251201132929",
+    "created_at": "2025-12-01T13:29:29.605Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 12,
+  "fields": {
+    "product": 5,
+    "movement_type": "out",
+    "quantity": "25.000",
+    "previous_stock": "30.000",
+    "new_stock": "5.000",
+    "reason": "Sale #TX20251201133219",
+    "created_at": "2025-12-01T13:32:19.262Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 13,
+  "fields": {
+    "product": 3,
+    "movement_type": "out",
+    "quantity": "15.000",
+    "previous_stock": "15.000",
+    "new_stock": "0.000",
+    "reason": "Sale #TX20260930093038",
+    "created_at": "2026-09-30T09:30:38.259Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 14,
+  "fields": {
+    "product": 5,
+    "movement_type": "out",
+    "quantity": "1.000",
+    "previous_stock": "5.000",
+    "new_stock": "4.000",
+    "reason": "Sale #TX20260930103640",
+    "created_at": "2026-09-30T10:36:40.277Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 15,
+  "fields": {
+    "product": 6,
+    "movement_type": "out",
+    "quantity": "5.000",
+    "previous_stock": "20.000",
+    "new_stock": "15.000",
+    "reason": "Sale #TX20260930104921",
+    "created_at": "2026-09-30T10:49:21.789Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 18,
+  "fields": {
+    "product": 6,
+    "movement_type": "out",
+    "quantity": "1.000",
+    "previous_stock": "15.000",
+    "new_stock": "14.000",
+    "reason": "Sale #TX20261002045417",
+    "created_at": "2026-10-02T04:54:17.787Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 19,
+  "fields": {
+    "product": 3,
+    "movement_type": "customer_return",
+    "quantity": "1.000",
+    "previous_stock": "0.000",
+    "new_stock": "1.000",
+    "reason": "Customer return CR20261002045742B38B",
+    "created_at": "2026-10-02T04:57:42.840Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 20,
+  "fields": {
+    "product": 6,
+    "movement_type": "customer_return",
+    "quantity": "2.000",
+    "previous_stock": "14.000",
+    "new_stock": "16.000",
+    "reason": "Customer return CR20261002045742B38B",
+    "created_at": "2026-10-02T04:57:42.841Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 23,
+  "fields": {
+    "product": 5,
+    "movement_type": "out",
+    "quantity": "1.000",
+    "previous_stock": "4.000",
+    "new_stock": "3.000",
+    "reason": "Sale #TX20261002050056",
+    "created_at": "2026-10-02T05:00:56.654Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 24,
+  "fields": {
+    "product": 4,
+    "movement_type": "out",
+    "quantity": "1.000",
+    "previous_stock": "37.000",
+    "new_stock": "36.000",
+    "reason": "Sale #TX20261002050056",
+    "created_at": "2026-10-02T05:00:56.654Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 25,
+  "fields": {
+    "product": 3,
+    "movement_type": "out",
+    "quantity": "1.000",
+    "previous_stock": "1.000",
+    "new_stock": "0.000",
+    "reason": "Sale #TX20261002050056",
+    "created_at": "2026-10-02T05:00:56.655Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 26,
+  "fields": {
+    "product": 6,
+    "movement_type": "out",
+    "quantity": "1.000",
+    "previous_stock": "16.000",
+    "new_stock": "15.000",
+    "reason": "Sale #TX20261002050056",
+    "created_at": "2026-10-02T05:00:56.655Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 27,
+  "fields": {
+    "product": 3,
+    "movement_type": "in",
+    "quantity": "200.000",
+    "previous_stock": "0.000",
+    "new_stock": "200.000",
+    "reason": "Purchase order #1 purchased",
+    "created_at": "2026-10-02T05:40:50.040Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 28,
+  "fields": {
+    "product": 3,
+    "movement_type": "in",
+    "quantity": "100.000",
+    "previous_stock": "0.000",
+    "new_stock": "100.000",
+    "reason": "Purchase order #1 purchased",
+    "created_at": "2026-10-02T05:40:50.041Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 29,
+  "fields": {
+    "product": 5,
+    "movement_type": "in",
+    "quantity": "200.000",
+    "previous_stock": "3.000",
+    "new_stock": "203.000",
+    "reason": "Purchase order #2 purchased",
+    "created_at": "2026-10-02T06:20:14.911Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 30,
+  "fields": {
+    "product": 6,
+    "movement_type": "out",
+    "quantity": "15.000",
+    "previous_stock": "15.000",
+    "new_stock": "0.000",
+    "reason": "Sale #TX20261002080836",
+    "created_at": "2026-10-02T08:08:36.511Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 31,
+  "fields": {
+    "product": 6,
+    "movement_type": "in",
+    "quantity": "100.000",
+    "previous_stock": "0.000",
+    "new_stock": "100.000",
+    "reason": "Purchase order #3 purchased",
+    "created_at": "2026-10-02T08:09:15.860Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 32,
+  "fields": {
+    "product": 6,
+    "movement_type": "in",
+    "quantity": "100.000",
+    "previous_stock": "100.000",
+    "new_stock": "200.000",
+    "reason": "Purchase order #4 purchased (expires 01 Dec 2026)",
+    "created_at": "2026-10-02T08:50:06.922Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 33,
+  "fields": {
+    "product": 3,
+    "movement_type": "out",
+    "quantity": "1.000",
+    "previous_stock": "100.000",
+    "new_stock": "99.000",
+    "reason": "Sale #TX20261002115429",
+    "created_at": "2026-10-02T11:54:29.188Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 34,
+  "fields": {
+    "product": 4,
+    "movement_type": "out",
+    "quantity": "1.000",
+    "previous_stock": "36.000",
+    "new_stock": "35.000",
+    "reason": "Sale #TX20261002115429",
+    "created_at": "2026-10-02T11:54:29.188Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 35,
+  "fields": {
+    "product": 5,
+    "movement_type": "out",
+    "quantity": "1.000",
+    "previous_stock": "203.000",
+    "new_stock": "202.000",
+    "reason": "Sale #TX20261002115429",
+    "created_at": "2026-10-02T11:54:29.189Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.stockmovement",
+  "pk": 36,
+  "fields": {
+    "product": 6,
+    "movement_type": "out",
+    "quantity": "1.000",
+    "previous_stock": "200.000",
+    "new_stock": "199.000",
+    "reason": "Sale #TX20261002115429",
+    "created_at": "2026-10-02T11:54:29.189Z",
+    "user": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "inventory.purchaseorder",
+  "pk": 1,
+  "fields": {
+    "supplier": null,
+    "order_date": "2026-10-02T05:40:50.037Z",
+    "expected_delivery": "2026-10-02",
+    "status": "received",
+    "total_amount": "480000.00"
+  }
+},
+{
+  "model": "inventory.purchaseorder",
+  "pk": 2,
+  "fields": {
+    "supplier": null,
+    "order_date": "2026-10-02T06:20:14.908Z",
+    "expected_delivery": "2026-10-02",
+    "status": "received",
+    "total_amount": "700000.00"
+  }
+},
+{
+  "model": "inventory.purchaseorder",
+  "pk": 3,
+  "fields": {
+    "supplier": null,
+    "order_date": "2026-10-02T08:09:15.858Z",
+    "expected_delivery": "2026-10-02",
+    "status": "received",
+    "total_amount": "90000.00"
+  }
+},
+{
+  "model": "inventory.purchaseorder",
+  "pk": 4,
+  "fields": {
+    "supplier": null,
+    "order_date": "2026-10-02T08:50:06.919Z",
+    "expected_delivery": "2026-10-02",
+    "status": "received",
+    "total_amount": "90000.00"
+  }
+},
+{
+  "model": "inventory.purchaseorderitem",
+  "pk": 2,
+  "fields": {
+    "purchase_order": 1,
+    "product": 3,
+    "quantity": "200.000",
+    "unit_cost": "900.00",
+    "expiry_date": null
+  }
+},
+{
+  "model": "inventory.purchaseorderitem",
+  "pk": 3,
+  "fields": {
+    "purchase_order": 1,
+    "product": 3,
+    "quantity": "100.000",
+    "unit_cost": "3000.00",
+    "expiry_date": null
+  }
+},
+{
+  "model": "inventory.purchaseorderitem",
+  "pk": 4,
+  "fields": {
+    "purchase_order": 2,
+    "product": 5,
+    "quantity": "200.000",
+    "unit_cost": "3500.00",
+    "expiry_date": null
+  }
+},
+{
+  "model": "inventory.purchaseorderitem",
+  "pk": 5,
+  "fields": {
+    "purchase_order": 3,
+    "product": 6,
+    "quantity": "100.000",
+    "unit_cost": "900.00",
+    "expiry_date": null
+  }
+},
+{
+  "model": "inventory.purchaseorderitem",
+  "pk": 6,
+  "fields": {
+    "purchase_order": 4,
+    "product": 6,
+    "quantity": "100.000",
+    "unit_cost": "900.00",
+    "expiry_date": "2026-12-01"
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 1,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20251023074213",
+    "total_amount": "1620.00",
+    "tax_amount": "120.00",
+    "payment_method": "cash",
+    "created_at": "2025-10-23T07:42:13.856Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 2,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20251023080029",
+    "total_amount": "58860.00",
+    "tax_amount": "4360.00",
+    "payment_method": "cash",
+    "created_at": "2025-10-23T08:00:29.419Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 3,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20251023090235",
+    "total_amount": "2160.00",
+    "tax_amount": "160.00",
+    "payment_method": "cash",
+    "created_at": "2025-10-23T09:02:35.069Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 4,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20251025124837",
+    "total_amount": "154440.00",
+    "tax_amount": "11440.00",
+    "payment_method": "cash",
+    "created_at": "2025-10-25T12:48:37.804Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 5,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20251026120453",
+    "total_amount": "4338360.00",
+    "tax_amount": "321360.00",
+    "payment_method": "cash",
+    "created_at": "2025-10-26T12:04:53.967Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 6,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20251026120952",
+    "total_amount": "70200.00",
+    "tax_amount": "5200.00",
+    "payment_method": "cash",
+    "created_at": "2025-10-26T12:09:52.995Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 7,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20251201132929",
+    "total_amount": "103680.00",
+    "tax_amount": "7680.00",
+    "payment_method": "cash",
+    "created_at": "2025-12-01T13:29:29.598Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 8,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20251201133219",
+    "total_amount": "135000.00",
+    "tax_amount": "10000.00",
+    "payment_method": "cash",
+    "created_at": "2025-12-01T13:32:19.260Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 9,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20260930093038",
+    "total_amount": "81000.00",
+    "tax_amount": "6000.00",
+    "payment_method": "cash",
+    "created_at": "2026-09-30T09:30:38.257Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 10,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20260930103640",
+    "total_amount": "5400.00",
+    "tax_amount": "400.00",
+    "payment_method": "cash",
+    "created_at": "2026-09-30T10:36:40.275Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 11,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20260930104921",
+    "total_amount": "5400.00",
+    "tax_amount": "400.00",
+    "payment_method": "cash",
+    "created_at": "2026-09-30T10:49:21.787Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 12,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20261002045417",
+    "total_amount": "1080.00",
+    "tax_amount": "80.00",
+    "payment_method": "cash",
+    "created_at": "2026-10-02T04:54:17.785Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 15,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20261002050056",
+    "total_amount": "19440.00",
+    "tax_amount": "1440.00",
+    "payment_method": "cash",
+    "created_at": "2026-10-02T05:00:56.652Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 16,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20261002080836",
+    "total_amount": "16200.00",
+    "tax_amount": "1200.00",
+    "payment_method": "cash",
+    "created_at": "2026-10-02T08:08:36.509Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.sale",
+  "pk": 17,
+  "fields": {
+    "customer": null,
+    "transaction_id": "TX20261002115429",
+    "total_amount": "19440.00",
+    "tax_amount": "1440.00",
+    "payment_method": "cash",
+    "created_at": "2026-10-02T11:54:29.186Z",
+    "cashier": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 7,
+  "fields": {
+    "sale": 7,
+    "product": 5,
+    "quantity": "10.000",
+    "unit_price": "5000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 8,
+  "fields": {
+    "sale": 7,
+    "product": 3,
+    "quantity": "5.000",
+    "unit_price": "5000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 9,
+  "fields": {
+    "sale": 7,
+    "product": 4,
+    "quantity": "3.000",
+    "unit_price": "7000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 10,
+  "fields": {
+    "sale": 8,
+    "product": 5,
+    "quantity": "25.000",
+    "unit_price": "5000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 11,
+  "fields": {
+    "sale": 9,
+    "product": 3,
+    "quantity": "15.000",
+    "unit_price": "5000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 12,
+  "fields": {
+    "sale": 10,
+    "product": 5,
+    "quantity": "1.000",
+    "unit_price": "5000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 13,
+  "fields": {
+    "sale": 11,
+    "product": 6,
+    "quantity": "5.000",
+    "unit_price": "1000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 14,
+  "fields": {
+    "sale": 12,
+    "product": 6,
+    "quantity": "1.000",
+    "unit_price": "1000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 19,
+  "fields": {
+    "sale": 15,
+    "product": 5,
+    "quantity": "1.000",
+    "unit_price": "5000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 20,
+  "fields": {
+    "sale": 15,
+    "product": 4,
+    "quantity": "1.000",
+    "unit_price": "7000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 21,
+  "fields": {
+    "sale": 15,
+    "product": 3,
+    "quantity": "1.000",
+    "unit_price": "5000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 22,
+  "fields": {
+    "sale": 15,
+    "product": 6,
+    "quantity": "1.000",
+    "unit_price": "1000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 23,
+  "fields": {
+    "sale": 16,
+    "product": 6,
+    "quantity": "15.000",
+    "unit_price": "1000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 24,
+  "fields": {
+    "sale": 17,
+    "product": 3,
+    "quantity": "1.000",
+    "unit_price": "5000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 25,
+  "fields": {
+    "sale": 17,
+    "product": 4,
+    "quantity": "1.000",
+    "unit_price": "7000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 26,
+  "fields": {
+    "sale": 17,
+    "product": 5,
+    "quantity": "1.000",
+    "unit_price": "5000.00"
+  }
+},
+{
+  "model": "sales.saleitem",
+  "pk": 27,
+  "fields": {
+    "sale": 17,
+    "product": 6,
+    "quantity": "1.000",
+    "unit_price": "1000.00"
+  }
+},
+{
+  "model": "sales.dailysummary",
+  "pk": 1,
+  "fields": {
+    "date": "2025-10-23",
+    "total_sales": "62640.00",
+    "total_customers": 0,
+    "cash_sales": "62640.00",
+    "card_sales": "0.00",
+    "mobile_sales": "0.00"
+  }
+},
+{
+  "model": "sales.dailysummary",
+  "pk": 2,
+  "fields": {
+    "date": "2025-10-25",
+    "total_sales": "154440.00",
+    "total_customers": 0,
+    "cash_sales": "154440.00",
+    "card_sales": "0.00",
+    "mobile_sales": "0.00"
+  }
+},
+{
+  "model": "sales.dailysummary",
+  "pk": 3,
+  "fields": {
+    "date": "2025-10-26",
+    "total_sales": "4408560.00",
+    "total_customers": 0,
+    "cash_sales": "4408560.00",
+    "card_sales": "0.00",
+    "mobile_sales": "0.00"
+  }
+},
+{
+  "model": "sales.dailysummary",
+  "pk": 4,
+  "fields": {
+    "date": "2025-12-01",
+    "total_sales": "238680.00",
+    "total_customers": 0,
+    "cash_sales": "238680.00",
+    "card_sales": "0.00",
+    "mobile_sales": "0.00"
+  }
+},
+{
+  "model": "sales.dailysummary",
+  "pk": 5,
+  "fields": {
+    "date": "2026-09-30",
+    "total_sales": "91800.00",
+    "total_customers": 0,
+    "cash_sales": "91800.00",
+    "card_sales": "0.00",
+    "mobile_sales": "0.00"
+  }
+},
+{
+  "model": "sales.dailysummary",
+  "pk": 6,
+  "fields": {
+    "date": "2026-10-02",
+    "total_sales": "56160.00",
+    "total_customers": 0,
+    "cash_sales": "56160.00",
+    "card_sales": "0.00",
+    "mobile_sales": "0.00"
+  }
+},
+{
+  "model": "sales.customerreturn",
+  "pk": 2,
+  "fields": {
+    "customer": null,
+    "sale": 12,
+    "reference": "CR20261002045742B38B",
+    "total_amount": "7000.00",
+    "reason": "",
+    "created_at": "2026-10-02T04:57:42.832Z",
+    "processed_by": [
+      "carl"
+    ]
+  }
+},
+{
+  "model": "sales.customerreturnitem",
+  "pk": 2,
+  "fields": {
+    "customer_return": 2,
+    "product": 3,
+    "quantity": "1.000",
+    "unit_price": "5000.00"
+  }
+},
+{
+  "model": "sales.customerreturnitem",
+  "pk": 3,
+  "fields": {
+    "customer_return": 2,
+    "product": 6,
+    "quantity": "2.000",
+    "unit_price": "1000.00"
+  }
+}
+]
