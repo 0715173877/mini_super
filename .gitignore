@@ -40,5 +40,5 @@ db.sqlite3
 *.json
 *.db
 db.sqlite3
-backups/
+# backups/
 *.bak
