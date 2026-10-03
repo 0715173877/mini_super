@@ -32,7 +32,7 @@ Thumbs.db
 
 
 *.sql
-*.json
+# *.json
 *.db
 db.sqlite3
 # Database files
