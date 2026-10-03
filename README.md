@@ -19,7 +19,7 @@ The application is built around **fast counter operation** (a keyboard/click dri
 | Project folder | `minisuper/` (repo was originally named `mini_super`) |
 | Framework | Django 5.2.7 |
 | Python | 3.13 (working venv: `../venv`, Python 3.13.7) |
-| Database | SQLite — `minisuper/db.sqlite3` (~292 KB, contains demo data) |
+| Database | PostgreSQL (configured via `.env`, driver `psycopg`); falls back to SQLite `minisuper/db.sqlite3` when `DB_NAME` is unset |
 | Front-end | Django templates + Bootstrap 5.3 + Font Awesome 6.4 + Inter + Chart.js (all via CDN) |
 | Static files | `static/` exists but is empty; every asset is loaded from a CDN |
 | Branding in UI | `CarlPos`, `POS.CarlKasa`, `MiniSuper` (inconsistent) |
@@ -159,8 +159,9 @@ Mini Supermarket/
 ├── .venv/                    # older virtualenv WITHOUT Django installed (do not use)
 └── minisuper/                # ← project root; every command is run from here
     ├── manage.py
-    ├── db.sqlite3            # dev database (git-ignored)
-    ├── .env                  # loaded by python-dotenv (currently 0 bytes)
+    ├── .env                  # DB credentials + Django settings, loaded by python-dotenv (git-ignored)
+    ├── .env.example          # documented template to copy into `.env`
+    ├── db.sqlite3            # SQLite fallback, used only when DB_NAME is unset (git-ignored)
     ├── r.txt                 # the real pip freeze / requirements list
     ├── README.md             # this description
     ├── INSTRUCTIONS.md       # setup, commands, conventions, known-issue fixes
@@ -460,14 +461,16 @@ products and purchase orders (migration `inventory/0005_make_supplier_optional`,
 
 ### P2 — configuration and production readiness
 
-* `settings.py` hard-codes `SECRET_KEY`, `DEBUG = True` and `ALLOWED_HOSTS = ['*']`.
+* `SECRET_KEY`, `DEBUG` and `ALLOWED_HOSTS` are read from `.env` (via `python-dotenv`), but still
+  fall back to a hard-coded insecure `SECRET_KEY` and `ALLOWED_HOSTS = ['*']` when the file is absent.
 * No `STATIC_ROOT` / `STATICFILES_DIRS` → `collectstatic` cannot run; `static/` is empty and every
   asset is a CDN URL, so the UI degrades without internet access.
 * `TIME_ZONE = 'UTC'` for store data priced in TZS, so the local business day boundary is shifted;
   every `created_at__date=...` comparison is off by the local offset.
 * `USE_L10N` is deprecated in Django 5 (harmless but should be removed).
-* `python-dotenv` is imported by `settings.py` and `.env` is loaded, but the package is **missing from
-  `r.txt`**; `.env` is 0 bytes so the `DB_*` variables are unused.
+* The database is **PostgreSQL** when `DB_NAME` is set in `.env` (driver `psycopg`, both listed in
+  `r.txt`), otherwise `settings.py` falls back to the local SQLite file. `python-dotenv` loads the
+  `.env` next to `manage.py`; `.env.example` documents every variable.
 * No `EMAIL_BACKEND` → a `POST` to `/accounts/password_reset/` fails with
   `ConnectionRefusedError` (default SMTP on `localhost:25`).
 * The password-reset pages exist only as `django.contrib.admin` templates: the three
@@ -502,7 +505,8 @@ products and purchase orders (migration `inventory/0005_make_supplier_optional`,
    and on the dashboard, and handed out from the owner-only **Users & Roles** page. See §7.
    Left for later: per-object rules (a seller seeing only *their own* sales), audit logging
    of role changes, and a password-reset flow that does not rely on the admin templates.
-7. **Config and deployment** — environment-driven `SECRET_KEY`/`DEBUG`/`ALLOWED_HOSTS`,
-   `STATIC_ROOT`, `Africa/Dar_es_Salaam` timezone, locally vendored assets, a real
-   `requirements.txt`, and smoke tests asserting every named URL returns 200/302.
+7. **Config and deployment** — *partly done*: `SECRET_KEY`/`DEBUG`/`ALLOWED_HOSTS` and the
+   PostgreSQL connection are environment-driven through `.env`. Remaining: `STATIC_ROOT`,
+   `Africa/Dar_es_Salaam` timezone, locally vendored assets, a real `requirements.txt` (the file is
+   still named `r.txt`), and smoke tests asserting every named URL returns 200/302.
 

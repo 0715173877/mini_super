@@ -50,27 +50,28 @@ python -c "import django; print(django.get_version())"   # expect: 5.2.7
 pip install -r r.txt
 ```
 
-`r.txt` is the real requirements file in this project (there is no `requirements.txt`). It is missing
-`python-dotenv`, which `settings.py` imports — add it if you rebuild the environment:
+`r.txt` is the real requirements file in this project (there is no `requirements.txt`). It already
+lists `python-dotenv` (used to load `.env`) and `psycopg` (the PostgreSQL driver Django 5 uses).
 
 ```bash
-pip install python-dotenv
-```
+# 3. Configuration — copy the template and fill in your database credentials
+cp .env.example .env
 
-```bash
-# 3. Database
+# 4. Database (PostgreSQL)
+createdb minisuper_db                   # once; use the DB_NAME you set in .env
 python manage.py migrate
 python manage.py createsuperuser        # optional; the admin only registers inventory models
 
-# 4. Sanity checks before you write any code
+# 5. Sanity checks before you write any code
 python manage.py check                  # expect: "System check identified no issues"
 python manage.py makemigrations --check --dry-run   # expect: "No changes detected"
 ```
 
-`db.sqlite3` in the project root already contains a small demo dataset — as measured on 2026-09-30:
-**3 products, 9 sales, 5 stock movements, 1 user**, and no purchase orders, categories beyond the
-seeded ones, suppliers, shifts, staff or waste records. You can browse the UI immediately. To start
-from scratch, back it up first and then re-run `migrate`:
+The shipped `db.sqlite3` in the project root contains a small demo dataset — as measured on
+2026-09-30: **3 products, 9 sales, 5 stock movements, 1 user**, and no purchase orders, categories
+beyond the seeded ones, suppliers, shifts, staff or waste records. That file is used only when
+`DB_NAME` is unset; a fresh PostgreSQL database starts empty after `migrate` (create a superuser to
+log in). If you must reset the SQLite fallback, back it up first:
 
 ```bash
 cp db.sqlite3 db.sqlite3.bak        # never delete the dev DB without a copy
@@ -92,7 +93,8 @@ python manage.py runserver
   (`LoginRequiredMixin` / `@login_required`) — **except** the state-changing views listed in
   README §8, which are currently unprotected.
 
-Log in with the superuser you created, or with a demo account if one already exists in `db.sqlite3`:
+Log in with the superuser you created (a fresh PostgreSQL database has no users until you run
+`createsuperuser`); the SQLite fallback `db.sqlite3` may already contain a demo account:
 
 ```bash
 python manage.py shell -c "from django.contrib.auth import get_user_model; print(list(get_user_model().objects.values_list('username', flat=True)))"
@@ -109,7 +111,7 @@ python manage.py makemigrations               # create migrations after model ed
 python manage.py migrate                      # apply migrations
 python manage.py showmigrations               # migration state per app
 python manage.py shell                        # interactive shell
-python manage.py dbshell                      # sqlite3 prompt
+python manage.py dbshell                      # psql / sqlite3 prompt, whichever engine is active
 python manage.py collectstatic                # FAILS today: STATIC_ROOT is not configured
 python manage.py test                         # runs the (currently empty) test suite
 python manage.py runserver 0.0.0.0:8000       # expose on the LAN for a phone/tablet test
@@ -127,15 +129,25 @@ python manage.py shell -c "from inventory.models import *; from sales.models imp
 
 ### Environment variables
 
-`settings.py` calls `load_dotenv()` and reads `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`,
-`DB_PORT`, but the shipped `.env` is **empty**, so the SQLite `DATABASES` block is what is actually
-used. To switch to PostgreSQL, fill in `.env` and add the Postgres engine block to `settings.py`.
-Never commit real credentials — and note `SECRET_KEY` is currently hard-coded in `settings.py`
-(see README §8, P2).
+`settings.py` calls `load_dotenv(BASE_DIR / '.env')` (existing process variables win) and reads:
+
+| Variable | Used for | Default in code |
+| --- | --- | --- |
+| `DJANGO_SECRET_KEY` | Django `SECRET_KEY` | an insecure dev key |
+| `DJANGO_DEBUG` | `DEBUG` (`1/true/yes/on` → `True`) | `True` |
+| `DJANGO_ALLOWED_HOSTS` | `ALLOWED_HOSTS`, comma-separated | `*` |
+| `DB_NAME` | PostgreSQL database; **if set, PostgreSQL is used** | — (SQLite fallback) |
+| `DB_USER`, `DB_PASSWORD` | PostgreSQL credentials | — |
+| `DB_HOST`, `DB_PORT` | PostgreSQL server | `localhost`, `5432` |
+
+`.env` is git-ignored — copy `.env.example` and fill in real values. When `DB_NAME` is empty the
+project falls back to the SQLite file `db.sqlite3`, so it still runs without a database server.
+Never commit real credentials.
 
 ### Database notes
 
-* Engine: SQLite, file `db.sqlite3` next to `manage.py`.
+* Engine: **PostgreSQL** (driver `psycopg`), configured through `.env`; SQLite `db.sqlite3` next to
+  `manage.py` is the fallback when `DB_NAME` is unset.
 * `StockMovement`, `Sale`, `SaleItem`, `WasteRecord`, `PeakHour`, `DailySummary` and the audit FKs use
   `PROTECT` on `auth.User`, so deleting a user can be blocked by history. Use `is_active = False`
   instead of deleting staff accounts.
