@@ -1,7 +1,7 @@
 # views.py
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.http import HttpResponse, JsonResponse
 from django.views import View
 from django.template.loader import render_to_string
@@ -12,12 +12,28 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 import openpyxl
 from openpyxl.styles import Font, Alignment
+from openpyxl.utils import get_column_letter
 from inventory.models import *
 from sales.models import *
 from django.db.models import Sum, Count, Q, F
 from django.utils import timezone
+from django.contrib.auth.mixins import LoginRequiredMixin
+from core.formatting import format_money
+from core.models import SiteSettings
+from core.permissions import PermissionRequiredMixin
 
-class ExportSalesReportView(View):
+
+def excel_money_format():
+    """openpyxl number format for money, e.g. '"$"#,##0.00' or '"TZS"#,##0'."""
+    settings = SiteSettings.load()
+    decimals = settings.get_decimals()
+    symbol = settings.get_symbol().replace('"', '')  # a quote would break the format string
+    body = '#,##0' + ('.' + '0' * decimals if decimals else '')
+    return f'"{symbol}"{body}'
+
+
+class ExportSalesReportView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'sales.view_sale'
     
     def get(self, request, format_type):
         # Get filter parameters
@@ -122,9 +138,9 @@ class ExportSalesReportView(View):
         # Summary Data
         summary_data = [
             ['Total Sales', f"{sales_data['total_sales']:,}"],
-            ['Total Revenue', f"${sales_data['total_revenue']:,.2f}"],
+            ['Total Revenue', format_money(sales_data['total_revenue'])],
             ['Items Sold', f"{sales_data['total_items_sold']:,}"],
-            ['Average Sale', f"${sales_data['average_sale']:,.2f}"],
+            ['Average Sale', format_money(sales_data['average_sale'])],
         ]
         
         summary_table = Table(summary_data, colWidths=[200, 100])
@@ -149,7 +165,7 @@ class ExportSalesReportView(View):
                 table_data.append([
                     day['date'],
                     str(day['daily_count']),
-                    f"${day['daily_total']:,.2f}"
+                    format_money(day['daily_total'])
                 ])
             
             sales_table = Table(table_data, colWidths=[150, 100, 100])
@@ -199,7 +215,7 @@ class ExportSalesReportView(View):
             worksheet[f'A{i}'] = label
             worksheet[f'B{i}'] = value
             if 'Revenue' in label or 'Sale' in label:
-                worksheet[f'B{i}'].number_format = '"$"#,##0.00'
+                worksheet[f'B{i}'].number_format = excel_money_format()
         
         # Daily Sales Data
         if sales_data.get('daily_sales'):
@@ -216,20 +232,20 @@ class ExportSalesReportView(View):
                 worksheet.cell(row=row, column=1).value = day['date']
                 worksheet.cell(row=row, column=2).value = day['daily_count']
                 worksheet.cell(row=row, column=3).value = day['daily_total']
-                worksheet.cell(row=row, column=3).number_format = '"$"#,##0.00'
+                worksheet.cell(row=row, column=3).number_format = excel_money_format()
         
         # Auto-adjust column widths
         for column in worksheet.columns:
             max_length = 0
-            column_letter = column[0].column_letter
+            column_index = column[0].column
             for cell in column:
                 try:
                     if len(str(cell.value)) > max_length:
                         max_length = len(str(cell.value))
-                except:
+                except Exception:
                     pass
             adjusted_width = (max_length + 2)
-            worksheet.column_dimensions[column_letter].width = adjusted_width
+            worksheet.column_dimensions[get_column_letter(column_index)].width = adjusted_width
         
         workbook.save(response)
         return response
@@ -248,9 +264,9 @@ class ExportSalesReportView(View):
         # Summary
         writer.writerow(['Summary'])
         writer.writerow(['Total Sales', sales_data['total_sales']])
-        writer.writerow(['Total Revenue', f"${sales_data['total_revenue']:,.2f}"])
+        writer.writerow(['Total Revenue', format_money(sales_data['total_revenue'])])
         writer.writerow(['Items Sold', sales_data['total_items_sold']])
-        writer.writerow(['Average Sale', f"${sales_data['average_sale']:,.2f}"])
+        writer.writerow(['Average Sale', format_money(sales_data['average_sale'])])
         writer.writerow([])
         
         # Daily Sales
@@ -261,12 +277,13 @@ class ExportSalesReportView(View):
                 writer.writerow([
                     day['date'],
                     day['daily_count'],
-                    f"${day['daily_total']:,.2f}"
+                    format_money(day['daily_total'])
                 ])
         
         return response
 
-class ExportInventoryReportView(View):
+class ExportInventoryReportView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'inventory.view_product'
     
     def get(self, request, format_type):
         # Get filter parameters
@@ -336,7 +353,7 @@ class ExportInventoryReportView(View):
                 product.name,
                 product.category.name,
                 str(product.current_stock),
-                f"${product.selling_price:.2f}",
+                format_money(product.selling_price),
                 status
             ])
         
@@ -393,21 +410,21 @@ class ExportInventoryReportView(View):
             worksheet.cell(row=row, column=9).value = status
             
             # Format currency columns
-            worksheet.cell(row=row, column=7).number_format = '"$"#,##0.00'
-            worksheet.cell(row=row, column=8).number_format = '"$"#,##0.00'
+            worksheet.cell(row=row, column=7).number_format = excel_money_format()
+            worksheet.cell(row=row, column=8).number_format = excel_money_format()
         
         # Auto-adjust column widths
         for column in worksheet.columns:
             max_length = 0
-            column_letter = column[0].column_letter
+            column_index = column[0].column
             for cell in column:
                 try:
                     if len(str(cell.value)) > max_length:
                         max_length = len(str(cell.value))
-                except:
+                except Exception:
                     pass
             adjusted_width = (max_length + 2)
-            worksheet.column_dimensions[column_letter].width = adjusted_width
+            worksheet.column_dimensions[get_column_letter(column_index)].width = adjusted_width
         
         workbook.save(response)
         return response
@@ -438,8 +455,8 @@ class ExportInventoryReportView(View):
                 product.current_stock,
                 product.min_stock_level,
                 product.max_stock_level,
-                f"${product.cost_price:.2f}",
-                f"${product.selling_price:.2f}",
+                format_money(product.cost_price),
+                format_money(product.selling_price),
                 status
             ])
         

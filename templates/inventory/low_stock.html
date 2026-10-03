@@ -28,7 +28,7 @@
                         <p class="mb-1"><strong>Category:</strong> {{ product.category.name }}</p>
                         <p class="mb-1"><strong>Current Stock:</strong> {{ product.current_stock }}</p>
                         <p class="mb-1"><strong>Minimum Required:</strong> {{ product.min_stock_level }}</p>
-                        <p class="mb-0"><strong>Supplier:</strong> {{ product.supplier.name }}</p>
+                        <p class="mb-0"><strong>Supplier:</strong> {% if product.supplier %}{{ product.supplier.name }}{% else %}<span class="text-muted">No supplier</span>{% endif %}</p>
                     </div>
                     <div class="col-4 text-end">
                         <div class="display-6 text-warning">

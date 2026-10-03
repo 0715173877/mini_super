@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency %}
 {% load static %}
 
 {% block title %}Daily Summaries - POS.CarlKasa{% endblock %}
@@ -82,11 +83,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4>${{ total_revenue|default:0|floatformat:2 }}</h4>
+                        <h4>{{ total_revenue|default:0|money }}</h4>
                         <p class="mb-0">Total Revenue</p>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-dollar-sign fa-2x"></i>
+                        <i class="fas fa-money-bill-wave fa-2x"></i>
                     </div>
                 </div>
             </div>
@@ -112,7 +113,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4>${{ avg_daily_sales|default:0|floatformat:2 }}</h4>
+                        <h4>{{ avg_daily_sales|default:0|money }}</h4>
                         <p class="mb-0">Avg. Daily Sales</p>
                     </div>
                     <div class="align-self-center">
@@ -162,22 +163,22 @@
                                     <strong>{{ summary.date|date:"M d, Y" }}</strong>
                                 </td>
                                 <td class="text-end">
-                                    <strong class="text-success">${{ summary.total_sales|floatformat:2 }}</strong>
+                                    <strong class="text-success">{{ summary.total_sales|money }}</strong>
                                 </td>
                                 <td class="text-end">
-                                    <span class="text-success">${{ summary.cash_sales|floatformat:2 }}</span>
+                                    <span class="text-success">{{ summary.cash_sales|money }}</span>
                                 </td>
                                 <td class="text-end">
-                                    <span class="text-primary">${{ summary.card_sales|floatformat:2 }}</span>
+                                    <span class="text-primary">{{ summary.card_sales|money }}</span>
                                 </td>
                                 <td class="text-end">
-                                    <span class="text-info">${{ summary.mobile_sales|floatformat:2 }}</span>
+                                    <span class="text-info">{{ summary.mobile_sales|money }}</span>
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-primary">{{ summary.total_customers }}</span>
                                 </td>
                                 <td class="text-center">
-                                    ${{ summary.avg_transaction|floatformat:2 }}
+                                    {{ summary.avg_transaction|money }}
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-secondary">{{ summary.date|date:"l" }}</span>

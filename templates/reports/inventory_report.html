@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency %}
 {% load humanize %}
 
 {% block title %}Inventory Report - Cashboard{% endblock %}
@@ -47,7 +48,7 @@
             <div class="card bg-success text-white">
                 <div class="card-body">
                     <h6 class="card-title">Inventory Value</h6>
-                    <h3>${{ total_value|floatformat:2|intcomma }}</h3>
+                    <h3>{{ total_value|money }}</h3>
                     <small>At Cost</small>
                 </div>
             </div>
@@ -135,9 +136,9 @@
                             <td>{{ product.current_stock|intcomma }}</td>
                             <td>{{ product.min_stock_level|intcomma }}</td>
                             <td>{{ product.max_stock_level|intcomma }}</td>
-                            <td>${{ product.cost_price|floatformat:2|intcomma }}</td>
-                            <td>${{ product.selling_price|floatformat:2|intcomma }}</td>
-                            <td>${{ product.stock_value|floatformat:2|intcomma }}</td>
+                            <td>{{ product.cost_price|money }}</td>
+                            <td>{{ product.selling_price|money }}</td>
+                            <td>{{ product.stock_value|money }}</td>
                             <td>
                                 {% if product.current_stock == 0 %}
                                 <span class="badge bg-danger">Out of Stock</span>

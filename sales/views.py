@@ -1,20 +1,24 @@
 import json
+import uuid
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Sum, Count, Q, F
 from django.db import transaction
 from django.utils import timezone
 from django.http import JsonResponse
 from django.contrib import messages
 from datetime import datetime, timedelta
-from .models import Sale, SaleItem, Customer, DailySummary
+from .models import Sale, SaleItem, Customer, DailySummary, CustomerReturn, CustomerReturnItem
+from .forms import CustomerReturnForm, CustomerReturnItemFormSet
 from inventory.models import Product, StockMovement
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
+from core.permissions import PermissionRequiredMixin
 
 @login_required
+@permission_required('sales.add_sale', raise_exception=True)
 def point_of_sale(request):
     products = Product.objects.filter(current_stock__gt=0).select_related('category')
     customers = Customer.objects.filter(is_regular=True)
@@ -132,7 +136,8 @@ def update_daily_summary(date):
         summary.mobile_sales = summary_data['mobile_sales'] or 0
         summary.save()
 
-class SaleListView(LoginRequiredMixin, ListView):
+class SaleListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'sales.view_sale'
     model = Sale
     template_name = 'sales/sale_list.html'
     context_object_name = 'sales'
@@ -164,7 +169,8 @@ class SaleListView(LoginRequiredMixin, ListView):
         context['payment_method'] = self.request.GET.get('payment_method', '')
         return context
 
-class SaleDetailView(LoginRequiredMixin, DetailView):
+class SaleDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = 'sales.view_sale'
     model = Sale
     template_name = 'sales/sale_detail.html'
     context_object_name = 'sale'
@@ -174,7 +180,8 @@ class SaleDetailView(LoginRequiredMixin, DetailView):
         context['sale_items'] = self.object.items.select_related('product')
         return context
 
-class DailyReportView(LoginRequiredMixin, ListView):
+class DailyReportView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'sales.view_dailysummary'
     template_name = 'sales/daily_reports.html'
     context_object_name = 'daily_summaries'
     
@@ -204,6 +211,7 @@ class DailyReportView(LoginRequiredMixin, ListView):
         return context
 
 @login_required
+@permission_required('sales.view_customer', raise_exception=True)
 def customer_analytics(request):
     # Customer statistics
     total_customers = Customer.objects.count()
@@ -231,6 +239,7 @@ def customer_analytics(request):
     return render(request, 'sales/customer_analytics.html', context)
 
 @login_required
+@permission_required('sales.view_sale', raise_exception=True)
 def sales_api_data(request):
     """API endpoint for sales chart data"""
     days = int(request.GET.get('days', 7))
@@ -251,3 +260,262 @@ def sales_api_data(request):
         })
     
     return JsonResponse({'data': daily_data})
+
+
+@login_required
+@permission_required('sales.add_sale', raise_exception=True)
+def barcode_lookup(request, code):
+    """Resolve a scanned barcode (or SKU) to a product for the POS.
+
+    Called by the Bluetooth / serial scanner integration in
+    ``templates/sales/point_of_sale.html`` (Web Serial API). Returning JSON
+    lets the POS push the product straight into the cart without a reload.
+    """
+    code = (code or '').strip()
+
+    product = (
+        Product.objects.filter(barcode=code).first()
+        or Product.objects.filter(sku=code).first()
+    )
+
+    if product is None:
+        return JsonResponse({
+            'success': False,
+            'error': f'No product matches barcode "{code}".',
+        }, status=404)
+
+    if product.current_stock <= 0:
+        return JsonResponse({
+            'success': False,
+            'error': f'{product.name} is out of stock.',
+        })
+
+    return JsonResponse({
+        'success': True,
+        'product': {
+            'id': product.id,
+            'name': product.name,
+            'price': str(product.selling_price),
+            'stock': str(product.current_stock),
+            'barcode': product.barcode,
+            'sku': product.sku,
+        },
+    })
+
+
+@login_required
+@permission_required('sales.view_sale', raise_exception=True)
+def sale_search_api(request):
+    """Search past sales for the customer-return "Original Sale" picker.
+
+    Matches on the receipt / transaction id, the customer name or phone,
+    and an exact amount so a cashier can find the original receipt.
+    """
+    query = (request.GET.get('q') or '').strip()
+
+    sales = Sale.objects.select_related('customer').order_by('-created_at')
+    if query:
+        filters = (
+            Q(transaction_id__icontains=query)
+            | Q(customer__name__icontains=query)
+            | Q(customer__phone__icontains=query)
+        )
+        try:
+            filters |= Q(total_amount=Decimal(query))
+        except (InvalidOperation, ValueError):
+            pass
+        sales = sales.filter(filters)
+
+    sales = sales[:15]
+
+    results = [{
+        'id': sale.id,
+        'transaction_id': sale.transaction_id,
+        'date': timezone.localtime(sale.created_at).strftime('%d %b %Y %H:%M'),
+        'total': str(sale.total_amount),
+        'customer_id': sale.customer_id,
+        'customer_name': str(sale.customer) if sale.customer else 'Walk-in customer',
+        'payment_method': sale.get_payment_method_display(),
+    } for sale in sales]
+
+    return JsonResponse({'success': True, 'results': results})
+
+
+@login_required
+@permission_required('sales.view_sale', raise_exception=True)
+def sale_items_api(request, pk):
+    """Return the line items of a sale for pre-filling a customer return.
+
+    For each line we also report how much of it has already been returned
+    against this same sale, so the form only offers what is still returnable.
+    """
+    sale = get_object_or_404(
+        Sale.objects.select_related('customer').prefetch_related('items__product'),
+        pk=pk,
+    )
+
+    already_returned = {
+        row['product_id']: row['total']
+        for row in CustomerReturnItem.objects.filter(
+            customer_return__sale=sale
+        ).values('product_id').annotate(total=Sum('quantity'))
+    }
+
+    items = []
+    for item in sale.items.all():
+        returned = already_returned.get(item.product_id, Decimal('0'))
+        remaining = item.quantity - returned
+        items.append({
+            'product_id': item.product_id,
+            'product_name': item.product.name,
+            'sku': item.product.sku,
+            'quantity': str(item.quantity),
+            'already_returned': str(returned),
+            'remaining': str(remaining if remaining > 0 else Decimal('0')),
+            'unit_price': str(item.unit_price),
+        })
+
+    return JsonResponse({
+        'success': True,
+        'sale': {
+            'id': sale.id,
+            'transaction_id': sale.transaction_id,
+            'date': timezone.localtime(sale.created_at).strftime('%d %b %Y %H:%M'),
+            'total': str(sale.total_amount),
+            'customer_id': sale.customer_id,
+            'customer_name': str(sale.customer) if sale.customer else 'Walk-in customer',
+        },
+        'items': items,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Customer returns
+#
+# Goods a customer brings back re-enter the shop: recording a return adds the
+# quantities to Product.current_stock and logs one StockMovement per line with
+# movement_type='customer_return'. This is the mirror image of process_sale().
+# ---------------------------------------------------------------------------
+
+def generate_return_reference(prefix):
+    """Build a unique reference such as ``CR20260930A1B2C3``."""
+    stamp = timezone.now().strftime('%Y%m%d%H%M%S')
+    return f"{prefix}{stamp}{uuid.uuid4().hex[:4].upper()}"
+
+
+def add_customer_return_to_stock(customer_return, user):
+    """Add every line of a customer return back to stock.
+
+    Must be called inside ``transaction.atomic()``. Returns the number of
+    lines applied.
+    """
+    lines = list(customer_return.items.select_related('product'))
+    for item in lines:
+        product = item.product
+        previous_stock = product.current_stock
+        product.current_stock = previous_stock + item.quantity
+        product.save()
+
+        StockMovement.objects.create(
+            product=product,
+            movement_type='customer_return',
+            quantity=item.quantity,
+            previous_stock=previous_stock,
+            new_stock=product.current_stock,
+            reason=f'Customer return {customer_return.reference}',
+            user=user,
+        )
+    return len(lines)
+
+
+class CustomerReturnListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'sales.view_customerreturn'
+    model = CustomerReturn
+    template_name = 'sales/customer_return_list.html'
+    context_object_name = 'customer_returns'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return CustomerReturn.objects.select_related(
+            'customer', 'sale', 'processed_by'
+        ).prefetch_related('items').order_by('-created_at')
+
+
+class CustomerReturnCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = 'sales.add_customerreturn'
+    model = CustomerReturn
+    form_class = CustomerReturnForm
+    template_name = 'sales/customer_return_form.html'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        # Allow the sale detail page to pre-select the sale: ?sale=<pk>
+        sale_id = self.request.GET.get('sale')
+        if sale_id:
+            sale = Sale.objects.filter(pk=sale_id).first()
+            if sale:
+                initial['sale'] = sale
+                initial['customer'] = sale.customer
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['formset'] = CustomerReturnItemFormSet(self.request.POST, instance=self.object)
+        else:
+            context['formset'] = CustomerReturnItemFormSet(instance=self.object)
+        context['products'] = Product.objects.select_related('category').order_by('name')
+
+        # Info for the searchable "Original Sale" picker: pre-selected from
+        # ?sale=<pk> (sale detail page) or restored after a failed submission.
+        sale_id = self.request.POST.get('sale') or self.request.GET.get('sale')
+        selected_sale = None
+        if sale_id:
+            try:
+                selected_sale = Sale.objects.select_related('customer').filter(pk=sale_id).first()
+            except (TypeError, ValueError):
+                selected_sale = None
+        context['selected_sale'] = selected_sale
+        # Only auto-fill the item rows on a fresh GET so we never clobber a
+        # submission that came back with validation errors.
+        context['prefill_items'] = bool(selected_sale) and not self.request.POST
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        formset = context['formset']
+
+        if not formset.is_valid():
+            return self.form_invalid(form)
+
+        form.instance.processed_by = self.request.user
+        form.instance.reference = generate_return_reference('CR')
+
+        with transaction.atomic():
+            response = super().form_valid(form)
+            formset.instance = self.object
+            formset.save()
+            self.object.calculate_total_amount()
+            lines = add_customer_return_to_stock(self.object, self.request.user)
+
+        messages.success(
+            self.request,
+            f'Customer return {self.object.reference} recorded — '
+            f'stock updated for {lines} item(s).'
+        )
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy('customer-return-detail', kwargs={'pk': self.object.pk})
+
+
+class CustomerReturnDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = 'sales.view_customerreturn'
+    model = CustomerReturn
+    template_name = 'sales/customer_return_detail.html'
+    context_object_name = 'customer_return'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['return_items'] = self.object.items.select_related('product')
+        return context

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency %}
 {% load static %}
 
 {% block title %}Sales History{% endblock %}
@@ -69,10 +70,10 @@
                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                             Total Sales
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ total_sales_amount|default:0|floatformat:2 }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_sales_amount|default:0|money }}</div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
@@ -106,7 +107,7 @@
                             Avg. Transaction
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">
-                            ${{ average_sale_amount|default:0|floatformat:2 }}
+                            {{ average_sale_amount|default:0|money }}
                         </div>
                     </div>
                     <div class="col-auto">
@@ -125,7 +126,7 @@
                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                             Today's Sales
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ today_sales|default:0|floatformat:2 }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ today_sales|default:0|money }}</div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
@@ -172,9 +173,9 @@
                         </td>
                         <td>
                             <div>
-                                <small class="text-muted">{{ sale.timestamp|date:"M d, Y" }}</small>
+                                <small class="text-muted">{{ sale.created_at|date:"M d, Y" }}</small>
                                 <br>
-                                <small>{{ sale.timestamp|date:"H:i" }}</small>
+                                <small>{{ sale.created_at|date:"H:i" }}</small>
                             </div>
                         </td>
                         <td>
@@ -194,9 +195,9 @@
                             <span class="badge bg-primary rounded-pill">{{ sale.items.count }}</span>
                         </td>
                         <td class="text-end">
-                            <strong class="text-success">${{ sale.total_amount|floatformat:2 }}</strong>
+                            <strong class="text-success">{{ sale.total_amount|money }}</strong>
                             <br>
-                            <small class="text-muted">Tax: ${{ sale.tax_amount|floatformat:2 }}</small>
+                            <small class="text-muted">Tax: {{ sale.tax_amount|money }}</small>
                         </td>
                         <td class="text-center">
                             <span class="badge 

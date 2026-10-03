@@ -207,6 +207,24 @@
                 </div>
                 
                 <div class="card-body p-4">
+                    <!-- Messages (e.g. "You have been logged out") -->
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="fas
+                                    {% if message.tags == 'success' %}fa-check-circle
+                                    {% elif message.tags == 'error' %}fa-exclamation-circle
+                                    {% elif message.tags == 'warning' %}fa-exclamation-triangle
+                                    {% else %}fa-info-circle{% endif %}
+                                    me-2"></i>
+                                <div>{{ message }}</div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
                     <!-- Error Alert -->
                      {% if form.errors %}
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -221,7 +239,7 @@
                     {% endif %}
                     
                     <!-- Login Form -->
-                    <form method="post" action="#">
+                    <form method="post" action="{% url 'login' %}">
                         {% csrf_token %}
                         <div class="floating-input">
                             <div class="input-group">
@@ -260,7 +278,7 @@
                             </button>
                         </div>
 
-                        <input type="hidden" name="next" value="">
+                        <input type="hidden" name="next" value="{{ next }}">
                     </form>
 
                     <!-- Demo Credentials -->

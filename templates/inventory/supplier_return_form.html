@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Record Supplier Return - POS.CarlKasa{% endblock %}
+
+{% block page_title %}Record Supplier Return{% endblock %}
+
+{% block content_title %}Record Supplier Return{% endblock %}
+{% block content_subtitle %}Goods going back to a supplier — returned quantities are removed from stock{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-9">
+        <form method="post" id="supplierReturnForm">
+            {% csrf_token %}
+            {{ formset.management_form }}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            {% if formset.non_form_errors %}
+            <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+            {% endif %}
+
+            <!-- Return header -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-truck"></i> Return Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.supplier.id_for_label }}" class="form-label">Supplier</label>
+                            {{ form.supplier }}
+                            {% if form.supplier.help_text %}<div class="form-text">{{ form.supplier.help_text }}</div>{% endif %}
+                            {% for error in form.supplier.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.purchase_order.id_for_label }}" class="form-label">Purchase Order</label>
+                            {{ form.purchase_order }}
+                            {% if form.purchase_order.help_text %}<div class="form-text">{{ form.purchase_order.help_text }}</div>{% endif %}
+                            {% for error in form.purchase_order.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-12 mb-2">
+                            <label for="{{ form.reason.id_for_label }}" class="form-label">Reason</label>
+                            {{ form.reason }}
+                            {% for error in form.reason.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Returned items -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-boxes"></i> Returned Items</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 240px;">Product</th>
+                                    <th style="width: 130px;">Quantity</th>
+                                    <th style="width: 160px;">Unit Cost ({{ currency_symbol }})</th>
+                                    <th style="width: 60px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsBody">
+                                {% for item_form in formset %}
+                                <tr class="item-row">
+                                    <td>
+                                        {{ item_form.id }}
+                                        {{ item_form.product }}
+                                        {% for error in item_form.product.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td>
+                                        {{ item_form.quantity }}
+                                        {% for error in item_form.quantity.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td>
+                                        {{ item_form.unit_cost }}
+                                        {% for error in item_form.unit_cost.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="d-none">{{ item_form.DELETE }}</span>
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Remove">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="addRowBtn">
+                        <i class="fas fa-plus"></i> Add another item
+                    </button>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mb-4">
+                <a href="{% url 'supplier-return-list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Return &amp; Reduce Stock
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-3">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> How it works</h6>
+            </div>
+            <div class="card-body">
+                <p class="small mb-2">Each item you list here is removed from product stock.</p>
+                <p class="small mb-0 text-muted">You cannot return more than the current stock on hand. A stock movement is logged for every line.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Empty row template for JavaScript -->
+<template id="emptyRowTemplate">
+    <tr class="item-row">
+        <td>{{ formset.empty_form.id }}{{ formset.empty_form.product }}</td>
+        <td>{{ formset.empty_form.quantity }}</td>
+        <td>{{ formset.empty_form.unit_cost }}</td>
+        <td class="text-end">
+            <span class="d-none">{{ formset.empty_form.DELETE }}</span>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Remove">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const body = document.getElementById('itemsBody');
+        const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+
+        function wireRemove(row) {
+            row.querySelector('.remove-row').addEventListener('click', function () {
+                const deleteBox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                if (deleteBox) {
+                    deleteBox.checked = true;
+                    row.style.display = 'none';
+                } else {
+                    row.remove();
+                }
+            });
+        }
+
+        document.querySelectorAll('.item-row').forEach(wireRemove);
+
+        document.getElementById('addRowBtn').addEventListener('click', function () {
+            const index = parseInt(totalForms.value, 10);
+            const html = document.getElementById('emptyRowTemplate').innerHTML.replace(/__prefix__/g, index);
+            const temp = document.createElement('tbody');
+            temp.innerHTML = html.trim();
+            const row = temp.querySelector('tr');
+            body.appendChild(row);
+            totalForms.value = index + 1;
+            wireRemove(row);
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Users &amp; Roles - POS.CarlKasa{% endblock %}
+{% block page_title %}Users &amp; Roles{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap align-items-center mb-3">
+    <p class="text-muted mb-0">
+        Who can sign in, and which part of the shop each of them sees.
+    </p>
+    <a href="{% url 'user-create' %}" class="btn btn-primary">
+        <i class="fas fa-user-plus me-1"></i>Add a user
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body table-responsive">
+        <table class="table table-hover align-middle mb-0" id="staffUserTable">
+            <thead>
+                <tr>
+                    <th>Login</th>
+                    <th>Name</th>
+                    <th>Roles</th>
+                    <th>Access</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for staff_user in staff_users %}
+                <tr>
+                    <td>
+                        <strong>{{ staff_user.username }}</strong>
+                        {% if staff_user == user %}<span class="badge bg-info ms-1">you</span>{% endif %}
+                        {% if staff_user.email %}<div class="small text-muted">{{ staff_user.email }}</div>{% endif %}
+                    </td>
+                    <td>{{ staff_user.get_full_name|default:"—" }}</td>
+                    <td>
+                        {% for group in staff_user.groups.all %}
+                            <span class="badge bg-primary me-1">{{ group.name }}</span>
+                        {% empty %}
+                            <span class="badge bg-secondary">No role</span>
+                        {% endfor %}
+                        {% if staff_user.is_superuser %}<span class="badge bg-dark">Administrator</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if staff_user.is_active %}
+                            <span class="badge bg-success">Can sign in</span>
+                        {% else %}
+                            <span class="badge bg-danger">Blocked</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'user-update' staff_user.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-pen me-1"></i>Edit
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No logins yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0"><i class="fas fa-shield-alt me-2"></i>What the roles mean</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            {% for role in role_summary %}
+            <div class="col-md-6">
+                <div class="border rounded p-3 h-100">
+                    <strong>{{ role.group.name }}</strong>
+                    <span class="badge bg-secondary ms-1">
+                        {{ role.members }} login{{ role.members|pluralize }}
+                    </span>
+                    <div class="small text-muted mt-1">{{ role.description }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="alert alert-info mt-3 mb-0">
+            <i class="fas fa-info-circle me-1"></i>
+            An <strong>Owner</strong> runs the shop from these pages — the Django admin panel is
+            deliberately not part of any role.
+        </div>
+    </div>
+</div>
+{% endblock %}

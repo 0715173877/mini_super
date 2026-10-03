@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, TemplateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Sum, Count, Avg, Q, F
 from django.utils import timezone
 from django.contrib import messages
@@ -14,8 +14,13 @@ import json
 from .models import WasteRecord, Staff, Shift, PeakHour, SupplierPerformance
 from inventory.models import Product, Supplier, StockMovement
 from sales.models import Sale, DailySummary
+from core.formatting import format_money
+# Roles: the store operations belong to the Stock role (and the owner).
+from core.permissions import PermissionRequiredMixin
+from django.views.decorators.http import require_POST
 
 @login_required
+@permission_required('operations.view_wasterecord', raise_exception=True)
 def waste_tracking(request):
     """
     Main view for waste tracking - handles both display and form submission
@@ -99,6 +104,9 @@ def waste_tracking(request):
     
     return render(request, 'operations/waste_tracking.html', context)
 
+@login_required
+@require_POST
+@permission_required('operations.add_wasterecord', raise_exception=True)
 def record_waste(request):
     """
     Process waste recording form submission
@@ -149,7 +157,7 @@ def record_waste(request):
         )
         
         messages.success(request, 
-                        f'Waste recorded for {product.name}. {quantity} units wasted. Cost: ${cost_value:.2f}')
+                        f'Waste recorded for {product.name}. {quantity} units wasted. Cost: {format_money(cost_value)}')
         
     except Product.DoesNotExist:
         messages.error(request, 'Selected product not found.')
@@ -159,6 +167,8 @@ def record_waste(request):
     return redirect('waste-tracking')
 
 @login_required
+@require_POST
+@permission_required('operations.delete_wasterecord', raise_exception=True)
 def delete_waste_record(request, record_id):
     """
     Delete a waste record and restore stock
@@ -193,7 +203,8 @@ def delete_waste_record(request, record_id):
     
     return redirect('waste-tracking')
 
-class StaffSchedulingView(LoginRequiredMixin, ListView):
+class StaffSchedulingView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'operations.view_shift'
     """
     View for staff scheduling and shift management
     """
@@ -252,6 +263,7 @@ class StaffSchedulingView(LoginRequiredMixin, ListView):
         return context
 
 @login_required
+@permission_required('operations.add_shift', raise_exception=True)
 def add_shift(request):
     """
     Add a new shift for staff
@@ -313,6 +325,7 @@ def add_shift(request):
     return redirect('staff-scheduling')
 
 @login_required
+@permission_required('operations.delete_shift', raise_exception=True)
 def delete_shift(request, shift_id):
     """
     Delete a shift
@@ -331,7 +344,8 @@ def delete_shift(request, shift_id):
     
     return redirect('staff-scheduling')
 
-class PerformanceMetricsView(LoginRequiredMixin, TemplateView):
+class PerformanceMetricsView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+    permission_required = 'operations.view_shift'
     """
     View for overall performance metrics and KPIs
     """
@@ -422,7 +436,8 @@ class PerformanceMetricsView(LoginRequiredMixin, TemplateView):
         
         return context
 
-class SupplierPerformanceView(LoginRequiredMixin, ListView):
+class SupplierPerformanceView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'operations.view_supplierperformance'
     """
     View for supplier performance evaluation and tracking
     """
@@ -473,6 +488,7 @@ class SupplierPerformanceView(LoginRequiredMixin, ListView):
         return context
 
 @login_required
+@permission_required('operations.add_supplierperformance', raise_exception=True)
 def evaluate_supplier(request):
     """
     Process supplier evaluation form submission
@@ -519,6 +535,7 @@ def evaluate_supplier(request):
     return redirect('supplier-performance')
 
 @login_required
+@permission_required('operations.add_peakhour', raise_exception=True)
 def track_peak_hours(request):
     """
     Automatically track peak hours based on sales data for the past week
@@ -566,6 +583,7 @@ def track_peak_hours(request):
     return redirect('performance-metrics')
 
 @login_required
+@permission_required('operations.view_wasterecord', raise_exception=True)
 def operations_dashboard_data(request):
     """
     API endpoint for operations dashboard charts and metrics
@@ -616,6 +634,7 @@ def operations_dashboard_data(request):
         }, status=500)
 
 @login_required
+@permission_required('operations.view_shift', raise_exception=True)
 def staff_productivity_report(request):
     """
     Generate staff productivity report

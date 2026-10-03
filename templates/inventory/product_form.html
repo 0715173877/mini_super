@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency %}
 {% load static %}
 {% load humanize %}
 
@@ -96,7 +97,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="{{ form.supplier.id_for_label }}" class="form-label">
-                                    Supplier <span class="text-danger">*</span>
+                                    Supplier <span class="text-muted small">(optional)</span>
                                 </label>
                                 {{ form.supplier }}
                                 {% if form.supplier.errors %}
@@ -106,6 +107,7 @@
                                     {% endfor %}
                                 </div>
                                 {% endif %}
+                                <div class="form-text">Optional — leave blank if this product has no regular supplier</div>
                             </div>
                         </div>
                     </div>
@@ -155,7 +157,7 @@
                                     Cost Price <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text">TZS</span>
+                                    <span class="input-group-text">{{ currency_symbol }}</span>
                                     {{ form.cost_price }}
                                 </div>
                                 {% if form.cost_price.errors %}
@@ -174,7 +176,7 @@
                                     Selling Price <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text">TZS</span>
+                                    <span class="input-group-text">{{ currency_symbol }}</span>
                                     {{ form.selling_price }}
                                 </div>
                                 {% if form.selling_price.errors %}
@@ -193,7 +195,7 @@
                             <div class="alert alert-info" id="marginAlert">
                                 <strong>Profit Margin: <span id="profitMargin">0.0</span>%</strong>
                                 <br>
-                                <small>Profit per unit: TZS <span id="profitPerUnit">0.00</span></small>
+                                <small>Profit per unit: {{ currency_symbol }} <span id="profitPerUnit">0.00</span></small>
                             </div>
                         </div>
                     </div>
@@ -259,17 +261,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="{{ form.expiry_date.id_for_label }}" class="form-label">
-                                    Expiry Date
-                                </label>
-                                {{ form.expiry_date }}
-                                {% if form.expiry_date.errors %}
-                                <div class="text-danger small">
-                                    {% for error in form.expiry_date.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
+                                <label class="form-label">Expiry Date</label>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-info-circle"></i>
+                                    Recorded per delivery on the
+                                    <a href="{% url 'purchase-order-list' %}">purchase order</a>,
+                                    not here — the same product can arrive in batches with
+                                    different use-by dates.
+                                </p>
                             </div>
                         </div>
                         
@@ -351,11 +350,8 @@
                 {% if form.instance.pk %}
                 <hr>
                 <div class="small text-muted">
-                    <p><strong>Created:</strong> {{ form.instance.created_at|default:"Not available" }}</p>
-                    <p><strong>Last Updated:</strong> {{ form.instance.updated_at|default:"Not available" }}</p>
-                    {% if form.instance.current_stock %}
-                    <p><strong>Stock Value:</strong> TZS {{ form.instance.stock_value|floatformat:2|intcomma }}</p>
-                    {% endif %}
+                    <p><strong>Current stock:</strong> {{ form.instance.current_stock|floatformat:3 }}</p>
+                    <p class="mb-0"><strong>Stock Value:</strong> {{ form.instance.stock_value|money }}</p>
                 </div>
                 {% endif %}
             </div>
@@ -390,16 +386,16 @@
                 <div class="small">
                     <div class="d-flex justify-content-between mb-2">
                         <span>Cost Price:</span>
-                        <strong id="summaryCostPrice">TZS 0.00</strong>
+                        <strong id="summaryCostPrice">{{ currency_symbol }} 0.00</strong>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Selling Price:</span>
-                        <strong id="summarySellingPrice">TZS 0.00</strong>
+                        <strong id="summarySellingPrice">{{ currency_symbol }} 0.00</strong>
                     </div>
                     <hr class="my-2">
                     <div class="d-flex justify-content-between mb-2">
                         <span>Profit/Unit:</span>
-                        <strong id="summaryProfit">TZS 0.00</strong>
+                        <strong id="summaryProfit">{{ currency_symbol }} 0.00</strong>
                     </div>
                     <div class="d-flex justify-content-between">
                         <span>Margin:</span>
@@ -420,9 +416,9 @@
             return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
 
-        // Format currency with commas and 2 decimal places
+        // Format a money amount with the configured decimals and separators
         function formatCurrency(amount) {
-            return parseFloat(amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            return formatMoney(amount, false);
         }
 
         // Calculate profit margin in real-time
@@ -442,9 +438,9 @@
             document.getElementById('profitPerUnit').textContent = formatCurrency(profitPerUnit);
             
             // Update summary section
-            document.getElementById('summaryCostPrice').textContent = 'TZS ' + formatCurrency(costPrice);
-            document.getElementById('summarySellingPrice').textContent = 'TZS ' + formatCurrency(sellingPrice);
-            document.getElementById('summaryProfit').textContent = 'TZS ' + formatCurrency(profitPerUnit);
+            document.getElementById('summaryCostPrice').textContent = formatMoney(costPrice);
+            document.getElementById('summarySellingPrice').textContent = formatMoney(sellingPrice);
+            document.getElementById('summaryProfit').textContent = formatMoney(profitPerUnit);
             document.getElementById('summaryMargin').textContent = profitMargin.toFixed(1) + '%';
             
             // Update alert color based on margin

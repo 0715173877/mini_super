@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency %}
 {% load humanize %}
 
 {% block title %}Sales Report - Cashboard{% endblock %}
@@ -79,7 +80,7 @@
             <div class="card bg-success text-white">
                 <div class="card-body">
                     <h6 class="card-title">Total Revenue</h6>
-                    <h3>${{ total_revenue|floatformat:2|intcomma }}</h3>
+                    <h3>{{ total_revenue|money }}</h3>
                     <small>Gross Income</small>
                 </div>
             </div>
@@ -97,7 +98,7 @@
             <div class="card bg-warning text-white">
                 <div class="card-body">
                     <h6 class="card-title">Average Sale</h6>
-                    <h3>${{ average_sale|floatformat:2|intcomma }}</h3>
+                    <h3>{{ average_sale|money }}</h3>
                     <small>Per Transaction</small>
                 </div>
             </div>
@@ -127,7 +128,7 @@
                                 <tr>
                                     <td>{{ method.payment_method|title }}</td>
                                     <td>{{ method.count }}</td>
-                                    <td>${{ method.total|floatformat:2|intcomma }}</td>
+                                    <td>{{ method.total|money }}</td>
                                     <td>
                                         {% widthratio method.total total_revenue 100 as percentage %}
                                         {{ percentage|floatformat:1 }}%
@@ -162,7 +163,7 @@
                                 <tr>
                                     <td>{{ product.product__name }}</td>
                                     <td>{{ product.total_sold }}</td>
-                                    <td>${{ product.total_revenue|floatformat:2|intcomma }}</td>
+                                    <td>{{ product.total_revenue|money }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -193,7 +194,7 @@
                         <tr>
                             <td>{{ day.date }}</td>
                             <td>{{ day.daily_count }}</td>
-                            <td>${{ day.daily_total|floatformat:2|intcomma }}</td>
+                            <td>{{ day.daily_total|money }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

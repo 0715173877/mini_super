@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load currency %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Customer Return {{ customer_return.reference }} - POS.CarlKasa{% endblock %}
+
+{% block page_title %}Customer Return{% endblock %}
+
+{% block content_title %}Customer Return {{ customer_return.reference }}{% endblock %}
+{% block content_subtitle %}Goods returned by a customer — stock was increased by this return{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+    <a href="{% url 'customer-return-list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Returns
+    </a>
+    <a href="{% url 'customer-return-create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> New Return
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-undo"></i> Return Details</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr><th width="35%">Reference:</th><td><strong>{{ customer_return.reference }}</strong></td></tr>
+                    <tr><th>Date:</th><td>{{ customer_return.created_at|date:"M d, Y H:i" }}</td></tr>
+                    <tr>
+                        <th>Customer:</th>
+                        <td>
+                            {% if customer_return.customer %}{{ customer_return.customer.name }}
+                            {% else %}<span class="text-muted">Walk-in Customer</span>{% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Original Sale:</th>
+                        <td>
+                            {% if customer_return.sale %}
+                                <a href="{% url 'sale-detail' customer_return.sale.pk %}">{{ customer_return.sale.transaction_id }}</a>
+                            {% else %}<span class="text-muted">—</span>{% endif %}
+                        </td>
+                    </tr>
+                    <tr><th>Processed By:</th><td>{{ customer_return.processed_by.get_full_name|default:customer_return.processed_by.username }}</td></tr>
+                    <tr><th>Reason:</th><td>{{ customer_return.reason|default:"—" }}</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-boxes"></i> Returned Items</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-end">Quantity</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Line Total</th>
+                                <th class="text-end">Stock Now</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in return_items %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td class="text-end">{{ item.quantity }}</td>
+                                <td class="text-end">{{ item.unit_price|money }}</td>
+                                <td class="text-end">{{ item.total_price|money }}</td>
+                                <td class="text-end">{{ item.product.current_stock }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="fw-bold">
+                                <td colspan="3" class="text-end">Total Refund:</td>
+                                <td class="text-end">{{ customer_return.total_amount|money }}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-check-circle"></i> Stock Impact</h6>
+            </div>
+            <div class="card-body">
+                <p class="small mb-2">This return added <strong>{{ return_items|length }}</strong> line(s) back to stock.</p>
+                <p class="small mb-0 text-muted">Each line produced a stock movement of type <em>Customer Return</em>. Check the inventory history to see the before/after stock figures.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

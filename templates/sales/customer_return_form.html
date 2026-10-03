@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Record Customer Return - POS.CarlKasa{% endblock %}
+
+{% block page_title %}Record Customer Return{% endblock %}
+
+{% block content_title %}Record Customer Return{% endblock %}
+{% block content_subtitle %}Goods coming back from a customer — returned quantities go back into stock{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-9">
+        <form method="post" id="customerReturnForm">
+            {% csrf_token %}
+            {{ formset.management_form }}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            {% if formset.non_form_errors %}
+            <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+            {% endif %}
+
+            <!-- Return header -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-undo"></i> Return Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.customer.id_for_label }}" class="form-label">Customer</label>
+                            {{ form.customer }}
+                            {% if form.customer.help_text %}<div class="form-text">{{ form.customer.help_text }}</div>{% endif %}
+                            {% for error in form.customer.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="saleSearch" class="form-label">Original Sale</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="saleSearch"
+                                       placeholder="Search receipt no., customer or amount..."
+                                       autocomplete="off"
+                                       value="{% if selected_sale %}{{ selected_sale.transaction_id }} · {{ selected_sale.created_at|date:'d M Y H:i' }} · {{ selected_sale.customer|default:'Walk-in customer' }}{% endif %}">
+                                <button type="button" class="btn btn-outline-secondary" id="saleSearchClear"
+                                        title="Clear the selected sale">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            {{ form.sale }}
+                            <div id="saleSearchResults" class="list-group mt-1 d-none"
+                                 style="max-height: 300px; overflow-y: auto; position: relative; z-index: 10;"></div>
+                            <div id="saleSearchNote" class="small text-warning mt-1"></div>
+                            <div class="form-text">
+                                {{ form.sale.help_text }}
+                                Picking a sale fills in the customer and its items automatically.
+                            </div>
+                            {% for error in form.sale.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-12 mb-2">
+                            <label for="{{ form.reason.id_for_label }}" class="form-label">Reason</label>
+                            {{ form.reason }}
+                            {% for error in form.reason.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Returned items -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-boxes"></i> Returned Items</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 240px;">Product</th>
+                                    <th style="width: 140px;">Quantity</th>
+                                    <th style="width: 160px;">Unit Price ({{ currency_symbol }})</th>
+                                    <th style="width: 60px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsBody">
+                                {% for item_form in formset %}
+                                <tr class="item-row">
+                                    <td>
+                                        {{ item_form.id }}
+                                        {{ item_form.product }}
+                                        {% for error in item_form.product.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td>
+                                        {{ item_form.quantity }}
+                                        {% for error in item_form.quantity.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td>
+                                        {{ item_form.unit_price }}
+                                        {% for error in item_form.unit_price.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="d-none">{{ item_form.DELETE }}</span>
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Remove">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="addRowBtn">
+                        <i class="fas fa-plus"></i> Add another item
+                    </button>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mb-4">
+                <a href="{% url 'customer-return-list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Return &amp; Update Stock
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-3">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> How it works</h6>
+            </div>
+            <div class="card-body">
+                <p class="small mb-2">Each item you list here is added back to product stock.</p>
+                <p class="small mb-0 text-muted">A stock movement is logged for every line so the change is traceable in the inventory history.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Empty row template for JavaScript -->
+<template id="emptyRowTemplate">
+    <tr class="item-row">
+        <td>{{ formset.empty_form.id }}{{ formset.empty_form.product }}</td>
+        <td>{{ formset.empty_form.quantity }}</td>
+        <td>{{ formset.empty_form.unit_price }}</td>
+        <td class="text-end">
+            <span class="d-none">{{ formset.empty_form.DELETE }}</span>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Remove">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const body = document.getElementById('itemsBody');
+        const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+        const emptyTemplate = document.getElementById('emptyRowTemplate');
+
+        // Original-sale search elements
+        const saleInput = document.getElementById('id_sale');
+        const customerSelect = document.getElementById('id_customer');
+        const searchBox = document.getElementById('saleSearch');
+        const resultsBox = document.getElementById('saleSearchResults');
+        const noteBox = document.getElementById('saleSearchNote');
+        const clearBtn = document.getElementById('saleSearchClear');
+        const searchUrl = "{% url 'sale-search-api' %}";
+        const itemsUrlTemplate = "{% url 'sale-items-api' 0 %}";  // .../api/sales/0/items/
+
+        function wireRemove(row) {
+            row.querySelector('.remove-row').addEventListener('click', function () {
+                const deleteBox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                if (deleteBox) {
+                    deleteBox.checked = true;
+                    row.style.display = 'none';
+                } else {
+                    row.remove();
+                }
+            });
+        }
+
+        document.querySelectorAll('.item-row').forEach(wireRemove);
+
+        function hideAllRows() {
+            document.querySelectorAll('#itemsBody .item-row').forEach(function (row) {
+                const deleteBox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                if (deleteBox) {
+                    deleteBox.checked = true;
+                    row.style.display = 'none';
+                } else {
+                    row.remove();
+                }
+            });
+        }
+
+        function addRow(item) {
+            const index = parseInt(totalForms.value, 10);
+            const html = emptyTemplate.innerHTML.replace(/__prefix__/g, index);
+            const temp = document.createElement('tbody');
+            temp.innerHTML = html.trim();
+            const row = temp.querySelector('tr');
+            body.appendChild(row);
+            totalForms.value = index + 1;
+            wireRemove(row);
+
+            const productSelect = row.querySelector('select[name$="-product"]');
+            if (productSelect) { productSelect.value = String(item.product_id); }
+            row.querySelector('input[name$="-quantity"]').value = item.remaining || '';
+            row.querySelector('input[name$="-unit_price"]').value = item.unit_price || '';
+            return row;
+        }
+
+        document.getElementById('addRowBtn').addEventListener('click', function () {
+            addRow({ product_id: '', remaining: '', unit_price: '' });
+        });
+
+        // ---- original sale search --------------------------------------
+        function saleLabel(sale) {
+            return sale.transaction_id + ' \u00b7 ' + sale.date + ' \u00b7 ' + sale.customer_name;
+        }
+
+        function loadSaleItems(saleId) {
+            fetch(itemsUrlTemplate.replace('/0/items/', '/' + saleId + '/items/'))
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!data.success) { return; }
+                    if (customerSelect && data.sale.customer_id) {
+                        customerSelect.value = String(data.sale.customer_id);
+                    }
+                    hideAllRows();
+                    let added = 0;
+                    data.items.forEach(function (item) {
+                        if (parseFloat(item.remaining) > 0) { addRow(item); added += 1; }
+                    });
+                    noteBox.textContent = added
+                        ? 'Loaded ' + added + ' item(s) from ' + data.sale.transaction_id + ' \u2014 adjust quantities as needed.'
+                        : 'Every item on this sale has already been returned. Add rows manually if needed.';
+                })
+                .catch(function () {
+                    noteBox.textContent = 'Could not load the items for that sale.';
+                });
+        }
+
+        function renderResults(results) {
+            resultsBox.innerHTML = '';
+            if (!results.length) {
+                resultsBox.innerHTML = '<div class="list-group-item text-muted">No matching sales found.</div>';
+                resultsBox.classList.remove('d-none');
+                return;
+            }
+            results.forEach(function (sale) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'list-group-item list-group-item-action';
+                btn.innerHTML =
+                    '<div class="d-flex justify-content-between"><strong>' + sale.transaction_id +
+                    '</strong><span>' + sale.total + '</span></div>' +
+                    '<small class="text-muted">' + sale.date + ' \u00b7 ' + sale.customer_name +
+                    ' \u00b7 ' + sale.payment_method + '</small>';
+                btn.addEventListener('click', function () { chooseSale(sale); });
+                resultsBox.appendChild(btn);
+            });
+            resultsBox.classList.remove('d-none');
+        }
+
+        function chooseSale(sale) {
+            if (saleInput) { saleInput.value = String(sale.id); }
+            searchBox.value = saleLabel(sale);
+            resultsBox.classList.add('d-none');
+            loadSaleItems(sale.id);
+        }
+
+        let searchTimer = null;
+        searchBox.addEventListener('input', function () {
+            // A fresh query invalidates any previously chosen sale.
+            if (saleInput) { saleInput.value = ''; }
+            noteBox.textContent = '';
+            const query = searchBox.value.trim();
+            clearTimeout(searchTimer);
+            if (!query) {
+                resultsBox.classList.add('d-none');
+                return;
+            }
+            searchTimer = setTimeout(function () {
+                fetch(searchUrl + '?q=' + encodeURIComponent(query))
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) { if (data.success) { renderResults(data.results); } })
+                    .catch(function () { resultsBox.classList.add('d-none'); });
+            }, 250);
+        });
+
+        clearBtn.addEventListener('click', function () {
+            if (saleInput) { saleInput.value = ''; }
+            searchBox.value = '';
+            resultsBox.classList.add('d-none');
+            noteBox.textContent = '';
+        });
+
+        document.addEventListener('click', function (event) {
+            if (event.target !== searchBox && !resultsBox.contains(event.target)) {
+                resultsBox.classList.add('d-none');
+            }
+        });
+
+        {% if prefill_items %}loadSaleItems('{{ selected_sale.pk }}');{% endif %}
+    });
+</script>
+{% endblock %}

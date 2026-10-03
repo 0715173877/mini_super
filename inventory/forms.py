@@ -3,27 +3,10 @@ from django.core.validators import EmailValidator, RegexValidator
 from .models import *
 from django.forms import inlineformset_factory
 
-# Purchase Order Item Formset
-PurchaseOrderItemFormSet = inlineformset_factory(
-    PurchaseOrder,
-    PurchaseOrderItem,
-    fields=('product', 'quantity', 'unit_cost'),
-    extra=1,
-    can_delete=True,
-    widgets={
-        'product': forms.Select(attrs={'class': 'form-select'}),
-        'quantity': forms.NumberInput(attrs={
-            'class': 'form-control',
-            'step': '0.001',
-            'min': '0.001'
-        }),
-        'unit_cost': forms.NumberInput(attrs={
-            'class': 'form-control',
-            'step': '0.01',
-            'min': '0'
-        }),
-    }
-)
+# NOTE: the purchase-order item formset lives further down this module (next to
+# PurchaseOrderItemForm) so it can reuse that form class. Do not add a second
+# definition here — a duplicate used to shadow the real one and silently
+# swallowed the expiry_date field.
 
 class CategoryForm(forms.ModelForm):
     class Meta:
@@ -150,10 +133,14 @@ class SupplierForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
+        # No expiry_date here on purpose: a use-by date is a fact about a
+        # delivery, so it is captured per line on the purchase order form (see
+        # PurchaseOrderItemForm below). Product.expiry_date is derived from those
+        # lines and is read-only.
         fields = [
             'name', 'sku', 'barcode', 'category', 'supplier', 'product_type',
             'cost_price', 'selling_price', 'current_stock', 
-            'min_stock_level', 'max_stock_level', 'expiry_date',
+            'min_stock_level', 'max_stock_level',
             'requires_refrigeration', 'is_high_value', 'is_high_theft_risk'
         ]
         widgets = {
@@ -208,10 +195,6 @@ class ProductForm(forms.ModelForm):
                 'min': '0',
                 'placeholder': '0'
             }),
-            'expiry_date': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
             'requires_refrigeration': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
@@ -234,7 +217,6 @@ class ProductForm(forms.ModelForm):
             'current_stock': 'Current Stock',
             'min_stock_level': 'Minimum Stock Level',
             'max_stock_level': 'Maximum Stock Level',
-            'expiry_date': 'Expiry Date',
             'requires_refrigeration': 'Requires Refrigeration',
             'is_high_value': 'High Value Item',
             'is_high_theft_risk': 'High Theft Risk'
@@ -294,7 +276,10 @@ class PurchaseOrderForm(forms.ModelForm):
 class PurchaseOrderItemForm(forms.ModelForm):
     class Meta:
         model = PurchaseOrderItem
-        fields = ['product', 'quantity', 'unit_cost']
+        # expiry_date is the use-by date printed on the delivery — the only place
+        # a shelf life is ever recorded. The product's expiry is derived from the
+        # lines of the orders it has received, which is what the alerts read.
+        fields = ['product', 'quantity', 'unit_cost', 'expiry_date']
         widgets = {
             'product': forms.Select(attrs={
                 'class': 'form-select'
@@ -309,6 +294,13 @@ class PurchaseOrderItemForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0'
             }),
+            'expiry_date': forms.DateInput(
+                attrs={
+                    'class': 'form-control',
+                    'type': 'date',
+                },
+                format='%Y-%m-%d',
+            ),
         }
 
 class StockAdjustmentForm(forms.Form):
@@ -353,6 +345,59 @@ PurchaseOrderItemFormSet = forms.inlineformset_factory(
     extra=1,
     can_delete=True
 )
+
+class SupplierReturnForm(forms.ModelForm):
+    class Meta:
+        model = SupplierReturn
+        fields = ['supplier', 'purchase_order', 'reason']
+        widgets = {
+            'supplier': forms.Select(attrs={'class': 'form-select'}),
+            'purchase_order': forms.Select(attrs={'class': 'form-select'}),
+            'reason': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Why are these goods going back to the supplier?',
+            }),
+        }
+        labels = {
+            'supplier': 'Supplier',
+            'purchase_order': 'Purchase Order',
+            'reason': 'Reason',
+        }
+        help_texts = {
+            'supplier': 'Optional — leave blank for a walk-in / unknown vendor.',
+            'purchase_order': 'Optional — link this return to the original purchase order.',
+            'reason': 'Optional note explaining the return.',
+        }
+
+
+class SupplierReturnItemForm(forms.ModelForm):
+    class Meta:
+        model = SupplierReturnItem
+        fields = ('product', 'quantity', 'unit_cost')
+        widgets = {
+            'product': forms.Select(attrs={'class': 'form-select product-select'}),
+            'quantity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.001',
+                'min': '0.001',
+            }),
+            'unit_cost': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+            }),
+        }
+
+
+SupplierReturnItemFormSet = inlineformset_factory(
+    SupplierReturn,
+    SupplierReturnItem,
+    form=SupplierReturnItemForm,
+    extra=1,
+    can_delete=True,
+)
+
 
 class CategoryFilterForm(forms.Form):
     name = forms.CharField(

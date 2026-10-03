@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load currency %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Supplier Returns - POS.CarlKasa{% endblock %}
+
+{% block page_title %}Supplier Returns{% endblock %}
+
+{% block content_title %}Supplier Returns{% endblock %}
+{% block content_subtitle %}Goods sent back to suppliers — every return removes its quantities from stock{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{% url 'supplier-return-create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Record Supplier Return
+    </a>
+</div>
+
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0"><i class="fas fa-truck"></i> Returns</h5>
+    </div>
+    <div class="card-body">
+        {% if supplier_returns %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Date</th>
+                        <th>Supplier</th>
+                        <th>Purchase Order</th>
+                        <th class="text-center">Items</th>
+                        <th class="text-end">Value</th>
+                        <th>Processed By</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ret in supplier_returns %}
+                    <tr>
+                        <td><strong>{{ ret.reference }}</strong></td>
+                        <td>{{ ret.created_at|date:"M d, Y H:i" }}</td>
+                        <td>
+                            {% if ret.supplier %}{{ ret.supplier.name }}
+                            {% else %}<span class="text-muted">Unknown</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if ret.purchase_order %}
+                                <a href="{% url 'purchase-order-detail' ret.purchase_order.pk %}">PO-{{ ret.purchase_order.id|stringformat:"06d" }}</a>
+                            {% else %}<span class="text-muted">—</span>{% endif %}
+                        </td>
+                        <td class="text-center">{{ ret.items.count }}</td>
+                        <td class="text-end">{{ ret.total_amount|money }}</td>
+                        <td>{{ ret.processed_by.get_full_name|default:ret.processed_by.username }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'supplier-return-detail' ret.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+            <p class="text-muted mb-3">No supplier returns recorded yet.</p>
+            <a href="{% url 'supplier-return-create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Record the first return
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

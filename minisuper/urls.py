@@ -12,6 +12,7 @@ urlpatterns = [
     path('inventory/', include('inventory.urls')),
     path('sales/', include('sales.urls')),
     path('operations/', include('operations.urls')),
+    path('', include('core.urls')),   # /settings/ and /notifications/
     
     # Authentication URLs - Using Django's built-in views with custom templates
     path('accounts/login/', auth_views.LoginView.as_view(

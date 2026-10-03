@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Adjust Stock - {{ product.name }}{% endblock %}
+{% block page_title %}Stock Adjustment{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><strong>{{ product.name }}</strong> (SKU {{ product.sku }})</div>
+            <div class="card-body">
+                <p class="text-muted">Current stock: <strong>{{ product.current_stock }}</strong></p>
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label d-block">{{ form.adjustment_type.label }}</label>
+                        {% for radio in form.adjustment_type %}
+                            <div class="form-check form-check-inline">
+                                {{ radio.tag }}
+                                <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                            </div>
+                        {% endfor %}
+                        {% for error in form.adjustment_type.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.quantity.id_for_label }}">{{ form.quantity.label }}</label>
+                        {{ form.quantity }}
+                        {% for error in form.quantity.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
+                        {{ form.reason }}
+                        {% for error in form.reason.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Apply adjustment</button>
+                    <a href="{% url 'product-detail' product.id %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

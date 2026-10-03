@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load currency %}
+{% block title %}{{ product.name }} - MiniSuper{% endblock %}
+{% block page_title %}Product Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h4 mb-0">{{ product.name }}</h2>
+    <div>
+        <a href="{% url 'product-update' product.pk %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        <a href="{% url 'adjust-stock' product.id %}" class="btn btn-warning btn-sm">
+            <i class="fas fa-boxes"></i> Adjust Stock
+        </a>
+        <a href="{% url 'product-list' %}" class="btn btn-secondary btn-sm">Back</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header"><strong>Details</strong></div>
+            <div class="card-body">
+                <p><strong>SKU:</strong> {{ product.sku }}</p>
+                <p><strong>Barcode:</strong> {{ product.barcode|default:"-" }}</p>
+                <p><strong>Category:</strong> {{ product.category.name }}</p>
+                <p><strong>Supplier:</strong> {% if product.supplier %}{{ product.supplier.name }}{% else %}<span class="text-muted">No supplier</span>{% endif %}</p>
+                <p><strong>Type:</strong> {{ product.get_product_type_display }}</p>
+                <p><strong>Refrigerated:</strong> {{ product.requires_refrigeration|yesno:"Yes,No" }}</p>
+                <p><strong>Expiry:</strong>
+                    {% if product.expiry_date %}
+                        <span class="{% if product.expiry_status == 'expired' %}text-danger{% elif product.expiry_status == 'expiring_soon' %}text-warning{% endif %}">
+                            {{ product.expiry_date|date:"M d, Y" }}
+                        </span>
+                        <small class="text-muted">
+                            {% if product.expiry_status == 'expired' %}
+                                (expired {{ product.days_until_expiry|cut:"-" }} day{{ product.days_until_expiry|cut:"-"|pluralize }} ago)
+                            {% elif product.days_until_expiry == 0 %}
+                                (expires today)
+                            {% else %}
+                                ({{ product.days_until_expiry }} day{{ product.days_until_expiry|pluralize }} left)
+                            {% endif %}
+                        </small>
+                    {% else %}
+                        <span class="text-muted">Not recorded — no dated delivery yet</span>
+                    {% endif %}
+                </p>
+                <p><strong>Stock status:</strong>
+                    {% if product.stock_status == 'in_stock' %}
+                        <span class="badge bg-success">In stock</span>
+                    {% elif product.stock_status == 'low_stock' %}
+                        <span class="badge bg-warning text-dark">Low stock</span>
+                    {% else %}
+                        <span class="badge bg-danger">Out of stock</span>
+                    {% endif %}
+                </p>
+                {% if product.is_high_value or product.is_high_theft_risk %}
+                <p class="mb-0">
+                    {% if product.is_high_value %}<span class="badge bg-secondary">High value</span>{% endif %}
+                    {% if product.is_high_theft_risk %}<span class="badge bg-dark">High theft risk</span>{% endif %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header"><strong>Stock &amp; Pricing</strong></div>
+            <div class="card-body">
+                <p><strong>Current stock:</strong> {{ product.current_stock }}</p>
+                <p><strong>Min / Max level:</strong> {{ product.min_stock_level }} / {{ product.max_stock_level }}</p>
+                <p><strong>Cost price:</strong> {{ product.cost_price|money }}</p>
+                <p><strong>Selling price:</strong> {{ product.selling_price|money }}</p>
+                <p><strong>Profit margin:</strong> {{ product.profit_margin|floatformat:2 }}%</p>
+                <p class="mb-0"><strong>Stock value (at cost):</strong>
+                    {{ product.stock_value|money }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header"><strong>Recent stock movements</strong></div>
+    <div class="table-responsive">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>When</th><th>Type</th><th>Qty</th><th>Before</th><th>After</th><th>User</th><th>Reason</th></tr></thead>
+            <tbody>
+            {% for movement in stock_movements %}
+                <tr>
+                    <td>{{ movement.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ movement.get_movement_type_display }}</td>
+                    <td>{{ movement.quantity }}</td>
+                    <td>{{ movement.previous_stock }}</td>
+                    <td>{{ movement.new_stock }}</td>
+                    <td>{{ movement.user.username|default:"system" }}</td>
+                    <td>{{ movement.reason|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-3">No movements recorded.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

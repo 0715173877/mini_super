@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency %}
 {% load static %}
 
 {% block title %}Customer Analytics - POS.CarlKasa{% endblock %}
@@ -114,10 +115,10 @@
                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                             Avg. Customer Value
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ avg_customer_value|floatformat:2 }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ avg_customer_value|money }}</div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
@@ -157,13 +158,13 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-end">
-                                    <strong class="text-success">${{ customer.total_spent|floatformat:2 }}</strong>
+                                    <strong class="text-success">{{ customer.total_spent|money }}</strong>
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-primary">{{ customer.purchase_count }}</span>
                                 </td>
                                 <td class="text-center">
-                                    ${{ customer.avg_spend|floatformat:2 }}
+                                    {{ customer.avg_spend|money }}
                                 </td>
                                 <td>
                                     {% if customer.is_regular %}
@@ -213,7 +214,7 @@
                     </div>
                     <div class="col-6">
                         <div class="border rounded p-3">
-                            <div class="h4 text-success mb-1">${{ high_value_threshold }}</div>
+                            <div class="h4 text-success mb-1">{{ high_value_threshold|money }}</div>
                             <small class="text-muted">High Value Threshold</small>
                             <div class="small text-success">{{ high_value_customers }} customers</div>
                         </div>
@@ -250,7 +251,7 @@
                     </div>
                     <div class="col-md-3 text-center mb-3">
                         <div class="border rounded p-3">
-                            <div class="h4 text-success mb-1">${{ avg_transaction_value|floatformat:2 }}</div>
+                            <div class="h4 text-success mb-1">{{ avg_transaction_value|money }}</div>
                             <small class="text-muted">Avg. Transaction Value</small>
                         </div>
                     </div>

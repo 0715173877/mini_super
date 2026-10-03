@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency %}
 {% load static %}
 
 {% block title %}Performance Metrics - POS.CarlKasa{% endblock %}
@@ -60,7 +61,7 @@
                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                             Total Revenue
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ current_week_sales|floatformat:2 }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ current_week_sales|money }}</div>
                         {% if sales_growth != 0 %}
                         <div class="mt-2 mb-0 text-xs">
                             <span class="{% if sales_growth > 0 %}text-success{% else %}text-danger{% endif %}">
@@ -72,7 +73,7 @@
                         {% endif %}
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
@@ -89,7 +90,7 @@
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_transactions }}</div>
                         <div class="mt-2 mb-0 text-xs text-muted">
-                            Avg: ${{ avg_transaction_value|floatformat:2 }}
+                            Avg: {{ avg_transaction_value|money }}
                         </div>
                     </div>
                     <div class="col-auto">
@@ -152,7 +153,7 @@
                         <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
                             Waste Cost
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ monthly_waste|floatformat:2 }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ monthly_waste|money }}</div>
                         <div class="mt-2 mb-0 text-xs text-muted">
                             This month
                         </div>
@@ -173,7 +174,7 @@
                         <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
                             Productivity
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ staff_productivity|floatformat:2 }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ staff_productivity|money }}</div>
                         <div class="mt-2 mb-0 text-xs text-muted">
                             Sales per hour
                         </div>
@@ -275,7 +276,7 @@
                             <tr>
                                 <td>{{ hour.hour|stringformat:"02d" }}:00</td>
                                 <td class="text-end">{{ hour.customer_count }}</td>
-                                <td class="text-end">${{ hour.total_sales|floatformat:2 }}</td>
+                                <td class="text-end">{{ hour.total_sales|money }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -362,8 +363,8 @@
                                 <td class="text-center">{{ staff.shift_count }}</td>
                                 <td class="text-center">{{ staff.total_hours|floatformat:1 }}</td>
                                 <td class="text-center">{{ staff.sales_processed }}</td>
-                                <td class="text-end">${{ staff.sales_amount|floatformat:2 }}</td>
-                                <td class="text-end">${{ staff.sales_per_hour|floatformat:2 }}</td>
+                                <td class="text-end">{{ staff.sales_amount|money }}</td>
+                                <td class="text-end">{{ staff.sales_per_hour|money }}</td>
                                 <td class="text-center">
                                     {% if staff.sales_per_hour > 100 %}
                                     <span class="badge bg-success">Excellent</span>

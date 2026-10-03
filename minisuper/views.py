@@ -17,8 +17,11 @@ from django.db.models import Sum, Count, Avg, F, Q
 from django.utils import timezone
 from datetime import datetime, timedelta
 from inventory.models import  Product, Category
+# Roles: the sales report is a selling page, the inventory report a shelving one.
+from core.permissions import PermissionRequiredMixin
 
-class SalesReportView(LoginRequiredMixin, TemplateView):
+class SalesReportView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+    permission_required = 'sales.view_sale'
     template_name = 'reports/sales_report.html'
     
     def get_context_data(self, **kwargs):
@@ -93,7 +96,8 @@ class SalesReportView(LoginRequiredMixin, TemplateView):
         })
         return context
 
-class InventoryReportView(LoginRequiredMixin, ListView):
+class InventoryReportView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'inventory.view_product'
     template_name = 'reports/inventory_report.html'
     context_object_name = 'products'
     paginate_by = 50
@@ -141,7 +145,8 @@ class InventoryReportView(LoginRequiredMixin, ListView):
         })
         return context
 
-class AnalyticsView(LoginRequiredMixin, TemplateView):
+class AnalyticsView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+    permission_required = 'sales.view_sale'
     template_name = 'reports/analytics.html'
     
     def get_context_data(self, **kwargs):

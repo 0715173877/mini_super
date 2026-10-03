@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load currency %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Customer Returns - POS.CarlKasa{% endblock %}
+
+{% block page_title %}Customer Returns{% endblock %}
+
+{% block content_title %}Customer Returns{% endblock %}
+{% block content_subtitle %}Goods customers have brought back — every return adds its quantities back to stock{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{% url 'customer-return-create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Record Customer Return
+    </a>
+</div>
+
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0"><i class="fas fa-undo"></i> Returns</h5>
+    </div>
+    <div class="card-body">
+        {% if customer_returns %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Original Sale</th>
+                        <th class="text-center">Items</th>
+                        <th class="text-end">Refund</th>
+                        <th>Processed By</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ret in customer_returns %}
+                    <tr>
+                        <td><strong>{{ ret.reference }}</strong></td>
+                        <td>{{ ret.created_at|date:"M d, Y H:i" }}</td>
+                        <td>
+                            {% if ret.customer %}{{ ret.customer.name }}
+                            {% else %}<span class="text-muted">Walk-in</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if ret.sale %}
+                                <a href="{% url 'sale-detail' ret.sale.pk %}">{{ ret.sale.transaction_id }}</a>
+                            {% else %}<span class="text-muted">—</span>{% endif %}
+                        </td>
+                        <td class="text-center">{{ ret.items.count }}</td>
+                        <td class="text-end">{{ ret.total_amount|money }}</td>
+                        <td>{{ ret.processed_by.get_full_name|default:ret.processed_by.username }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'customer-return-detail' ret.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-undo fa-3x text-muted mb-3"></i>
+            <p class="text-muted mb-3">No customer returns recorded yet.</p>
+            <a href="{% url 'customer-return-create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Record the first return
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load currency %}
 
 {% block title %}{% if form.instance.pk %}Edit Purchase Order #{{ form.instance.id }}{% else %}Create Purchase Order{% endif %} - POS.CarlKasa{% endblock %}
 
 {% block page_title %}{% if form.instance.pk %}Edit Purchase Order{% else %}Create Purchase Order{% endif %}{% endblock %}
 
 {% block content_title %}{% if form.instance.pk %}Edit PO-#{{ form.instance.id|stringformat:"06d" }}{% else %}New Purchase Order{% endif %}{% endblock %}
-{% block content_subtitle %}{% if form.instance.pk %}Update purchase order details and items{% else %}Create a new purchase order from your suppliers{% endif %}{% endblock %}
+{% block content_subtitle %}{% if form.instance.pk %}Update purchase order details and items{% else %}Record what you are buying — create it already placed, or purchase it straight into stock{% endif %}{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -25,7 +26,17 @@
             <div class="card-body">
                 <form method="post" id="purchaseOrderForm">
                     {% csrf_token %}
+                    {# Required for the item formset — without it every POST is rejected. #}
+                    {{ formset.management_form }}
                     
+                    {% if formset.non_form_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in formset.non_form_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
                     {% if form.non_field_errors %}
                     <div class="alert alert-danger">
                         {% for error in form.non_field_errors %}
@@ -38,7 +49,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="{{ form.supplier.id_for_label }}" class="form-label">
-                                    Supplier <span class="text-danger">*</span>
+                                    Supplier <span class="text-muted small">(optional)</span>
                                 </label>
                                 {{ form.supplier }}
                                 {% if form.supplier.errors %}
@@ -48,7 +59,7 @@
                                     {% endfor %}
                                 </div>
                                 {% endif %}
-                                <div class="form-text">Select the supplier for this purchase order</div>
+                                <div class="form-text">Optional — leave blank for a walk-in or cash purchase</div>
                             </div>
                         </div>
                         
@@ -65,7 +76,7 @@
                                     {% endfor %}
                                 </div>
                                 {% endif %}
-                                <div class="form-text">Expected delivery date from supplier</div>
+                                <div class="form-text">Today by default — change it only if the supplier delivers later</div>
                             </div>
                         </div>
                     </div>
@@ -81,7 +92,10 @@
                                         {% elif form.instance.status == 'ordered' %}bg-info
                                         {% elif form.instance.status == 'received' %}bg-success
                                         {% else %}bg-danger{% endif %}">
-                                        {{ form.instance.get_status_display }}
+                                        {% if form.instance.status == 'draft' %}Draft (not placed)
+                                        {% elif form.instance.status == 'ordered' %}Placed
+                                        {% elif form.instance.status == 'received' %}Purchased
+                                        {% else %}Cancelled{% endif %}
                                     </span>
                                 </div>
                             </div>
@@ -106,86 +120,68 @@
                     </h6>
                     
                     <div id="orderItems">
-                        {% if form.instance.pk and form.instance.items.exists %}
-                            <!-- Existing items for editing -->
-                            {% for item in form.instance.items.all %}
-                            <div class="card mb-3 order-item" data-item-id="{{ item.id }}">
+                        {% for item_form in formset %}
+                            <div class="card mb-3 order-item"{% if item_form.instance.pk %} data-item-id="{{ item_form.instance.pk }}"{% endif %}>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-md-5">
+                                        <div class="col-md-4">
                                             <label class="form-label">Product</label>
-                                            <select class="form-select product-select" name="items-{{ forloop.counter0 }}-product" required>
+                                            <select class="form-select product-select" name="{{ item_form.product.html_name }}">
                                                 <option value="">Select Product</option>
                                                 {% for product in products %}
-                                                <option value="{{ product.id }}" 
-                                                    {% if item.product.id == product.id %}selected{% endif %}
+                                                <option value="{{ product.id }}"
+                                                    {% if item_form.product.value|stringformat:"s" == product.id|stringformat:"s" %}selected{% endif %}
                                                     data-cost="{{ product.cost_price }}">
                                                     {{ product.name }} (Stock: {{ product.current_stock }})
                                                 </option>
                                                 {% endfor %}
                                             </select>
+                                            {% for error in item_form.product.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                            {% endfor %}
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label">Quantity</label>
-                                            <input type="number" class="form-control quantity-input" 
-                                                   name="items-{{ forloop.counter0 }}-quantity" 
-                                                   value="{{ item.quantity|floatformat:3 }}" 
-                                                   step="0.001" min="0.001" required>
+                                            <input type="number" class="form-control quantity-input"
+                                                   name="{{ item_form.quantity.html_name }}"
+                                                   value="{{ item_form.quantity.value|default_if_none:'' }}"
+                                                   step="0.001" min="0.001">
+                                            {% for error in item_form.quantity.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                            {% endfor %}
                                         </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label">Unit Cost ($)</label>
-                                            <input type="number" class="form-control cost-input" 
-                                                   name="items-{{ forloop.counter0 }}-unit_cost" 
-                                                   value="{{ item.unit_cost|floatformat:2 }}" 
-                                                   step="0.01" min="0" required>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Unit Cost ({{ currency_symbol }})</label>
+                                            <input type="number" class="form-control cost-input"
+                                                   name="{{ item_form.unit_cost.html_name }}"
+                                                   value="{{ item_form.unit_cost.value|default_if_none:'' }}"
+                                                   step="0.01" min="0">
+                                            {% for error in item_form.unit_cost.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Expiry Date</label>
+                                            <input type="date" class="form-control expiry-input"
+                                                   name="{{ item_form.expiry_date.html_name }}"
+                                                   value="{{ item_form.expiry_date.value|date:'Y-m-d' }}"
+                                                   title="Use-by date on the delivery — copied to the product when purchased">
+                                            {% for error in item_form.expiry_date.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                            {% endfor %}
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label">Total</label>
                                             <div class="form-control-plaintext total-display text-end">
-                                                $<span class="item-total">{{ item.total_cost|floatformat:2 }}</span>
+                                                {{ currency_symbol }}<span class="item-total">{% if item_form.instance.pk %}{{ item_form.instance.total_cost|money_plain }}{% else %}{{ 0|money_plain }}{% endif %}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <input type="hidden" name="items-{{ forloop.counter0 }}-id" value="{{ item.id }}">
-                                </div>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <!-- New item template -->
-                            <div class="card mb-3 order-item">
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-5">
-                                            <label class="form-label">Product</label>
-                                            <select class="form-select product-select" name="items-0-product" required>
-                                                <option value="">Select Product</option>
-                                                {% for product in products %}
-                                                <option value="{{ product.id }}" data-cost="{{ product.cost_price }}">
-                                                    {{ product.name }} (Stock: {{ product.current_stock }})
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label">Quantity</label>
-                                            <input type="number" class="form-control quantity-input" 
-                                                   name="items-0-quantity" value="1" 
-                                                   step="0.001" min="0.001" required>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label">Unit Cost ($)</label>
-                                            <input type="number" class="form-control cost-input" 
-                                                   name="items-0-unit_cost" value="0.00" 
-                                                   step="0.01" min="0" required>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label">Total</label>
-                                            <div class="form-control-plaintext total-display text-end">
-                                                $<span class="item-total">0.00</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <input type="hidden" name="items-0-id" value="">
+                                    {{ item_form.id }}
+                                    {% if item_form.instance.pk %}
+                                    {# Ticked by the Remove button so the formset deletes this line. #}
+                                    <input type="checkbox" name="{{ item_form.DELETE.html_name }}" class="d-none delete-box">
+                                    {% endif %}
                                 </div>
                                 <div class="card-footer py-2">
                                     <button type="button" class="btn btn-sm btn-outline-danger remove-item">
@@ -193,7 +189,7 @@
                                     </button>
                                 </div>
                             </div>
-                        {% endif %}
+                        {% endfor %}
                     </div>
 
                     <!-- Add Item Button -->
@@ -211,16 +207,12 @@
                                     <h6 class="card-title">Order Summary</h6>
                                     <table class="table table-sm table-borderless mb-0">
                                         <tr>
-                                            <td>Subtotal:</td>
-                                            <td class="text-end">$<span id="orderSubtotal">0.00</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Tax (10%):</td>
-                                            <td class="text-end">$<span id="orderTax">0.00</span></td>
+                                            <td>Items:</td>
+                                            <td class="text-end">{{ currency_symbol }}<span id="orderSubtotal">{{ 0|money_plain }}</span></td>
                                         </tr>
                                         <tr class="border-top">
                                             <td><strong>Total Amount:</strong></td>
-                                            <td class="text-end"><strong>$<span id="orderTotal">0.00</span></strong></td>
+                                            <td class="text-end"><strong>{{ currency_symbol }}<span id="orderTotal">{{ 0|money_plain }}</span></strong></td>
                                         </tr>
                                     </table>
                                 </div>
@@ -235,23 +227,30 @@
                             <i class="fas fa-arrow-left"></i> Back to Orders
                         </a>
                         <div class="btn-group">
-                            {% if form.instance.pk and form.instance.status == 'draft' %}
-                            <button type="submit" name="save_draft" class="btn btn-outline-primary">
-                                <i class="fas fa-save"></i> Update Draft
-                            </button>
-                            <button type="submit" name="place_order" class="btn btn-primary">
-                                <i class="fas fa-paper-plane"></i> Place Order
-                            </button>
-                            {% elif not form.instance.pk %}
-                            <button type="submit" name="save_draft" class="btn btn-outline-primary">
-                                <i class="fas fa-save"></i> Save Draft
-                            </button>
+                            {% if not form.instance.pk %}
+                            {# Straight flow: a new order is created already placed — there is no draft step. #}
                             <button type="submit" name="place_order" class="btn btn-primary">
                                 <i class="fas fa-paper-plane"></i> Create & Place Order
                             </button>
-                            {% else %}
+                            <button type="submit" name="purchase_now" class="btn btn-success">
+                                <i class="fas fa-cart-plus"></i> Create & Purchase Now
+                            </button>
+                            {% elif form.instance.status == 'received' or form.instance.status == 'cancelled' %}
+                            {# Finished orders can only be corrected, never purchased again. #}
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> Update Order
+                            </button>
+                            {% else %}
+                            <button type="submit" name="save_draft" class="btn btn-outline-primary">
+                                <i class="fas fa-save"></i> Update Order
+                            </button>
+                            {% if form.instance.status == 'draft' %}
+                            <button type="submit" name="place_order" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Place Order
+                            </button>
+                            {% endif %}
+                            <button type="submit" name="purchase_now" class="btn btn-success">
+                                <i class="fas fa-cart-plus"></i> Purchase Now
                             </button>
                             {% endif %}
                         </div>
@@ -270,7 +269,7 @@
             <div class="card-body">
                 <h6>Creating Purchase Orders:</h6>
                 <ul class="small">
-                    <li>Select the supplier you're ordering from</li>
+                    <li>Pick a supplier — or leave it blank for a walk-in / cash purchase</li>
                     <li>Set realistic expected delivery dates</li>
                     <li>Use current cost prices for accurate costing</li>
                     <li>Add all items needed in a single order</li>
@@ -328,9 +327,9 @@
     <div class="card mb-3 order-item">
         <div class="card-body">
             <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label class="form-label">Product</label>
-                    <select class="form-select product-select" name="items-__prefix__-product" required>
+                    <select class="form-select product-select" name="items-__prefix__-product">
                         <option value="">Select Product</option>
                         {% for product in products %}
                         <option value="{{ product.id }}" data-cost="{{ product.cost_price }}">
@@ -342,19 +341,25 @@
                 <div class="col-md-2">
                     <label class="form-label">Quantity</label>
                     <input type="number" class="form-control quantity-input" 
-                           name="items-__prefix__-quantity" value="1" 
-                           step="0.001" min="0.001" required>
+                           name="items-__prefix__-quantity"
+                           step="0.001" min="0.001">
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">Unit Cost ($)</label>
+                <div class="col-md-2">
+                    <label class="form-label">Unit Cost ({{ currency_symbol }})</label>
                     <input type="number" class="form-control cost-input" 
-                           name="items-__prefix__-unit_cost" value="0.00" 
-                           step="0.01" min="0" required>
+                           name="items-__prefix__-unit_cost"
+                           step="0.01" min="0">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Expiry Date</label>
+                    <input type="date" class="form-control expiry-input"
+                           name="items-__prefix__-expiry_date"
+                           title="Use-by date on the delivery — copied to the product when purchased">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Total</label>
                     <div class="form-control-plaintext total-display text-end">
-                        $<span class="item-total">0.00</span>
+                        {{ currency_symbol }}<span class="item-total">{{ 0|money_plain }}</span>
                     </div>
                 </div>
             </div>
@@ -370,6 +375,165 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const itemsContainer = document.getElementById('orderItems');
+        const itemTemplate = document.getElementById('itemTemplate');
+        const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+
+        function escapeHtml(value) {
+            const box = document.createElement('div');
+            box.textContent = value == null ? '' : value;
+            return box.innerHTML;
+        }
+
+        // Highest index currently in the DOM — keeps TOTAL_FORMS in step when rows
+        // are added, so the formset never complains about a missing line.
+        function highestIndex() {
+            let highest = -1;
+            itemsContainer.querySelectorAll('input[name^="items-"], select[name^="items-"]').forEach(function (field) {
+                const match = field.name.match(/^items-(\d+)-/);
+                if (match) {
+                    highest = Math.max(highest, parseInt(match[1], 10));
+                }
+            });
+            return highest;
+        }
+
+        function bumpTotalForms(index) {
+            if (totalForms && parseInt(totalForms.value, 10) <= index) {
+                totalForms.value = index + 1;
+            }
+        }
+
+        function recalcTotals() {
+            let subtotal = 0;
+            itemsContainer.querySelectorAll('.order-item').forEach(function (row) {
+                if (row.style.display === 'none') { return; }
+                const quantity = parseFloat((row.querySelector('.quantity-input') || {}).value) || 0;
+                const cost = parseFloat((row.querySelector('.cost-input') || {}).value) || 0;
+                const lineTotal = quantity * cost;
+                const totalCell = row.querySelector('.item-total');
+                if (totalCell) { totalCell.textContent = formatMoney(lineTotal, false); }
+                subtotal += lineTotal;
+            });
+            const subtotalBox = document.getElementById('orderSubtotal');
+            const totalBox = document.getElementById('orderTotal');
+            if (subtotalBox) { subtotalBox.textContent = formatMoney(subtotal, false); }
+            if (totalBox) { totalBox.textContent = formatMoney(subtotal, false); }
+        }
+
+        function wireRow(row) {
+            const removeBtn = row.querySelector('.remove-item');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function () {
+                    const deleteBox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                    if (deleteBox) {
+                        // Saved line: flag it for deletion instead of dropping the DOM node.
+                        deleteBox.checked = true;
+                        row.style.display = 'none';
+                    } else {
+                        row.remove();
+                    }
+                    recalcTotals();
+                });
+            }
+
+            row.querySelectorAll('.quantity-input, .cost-input').forEach(function (input) {
+                input.addEventListener('input', recalcTotals);
+                input.addEventListener('change', recalcTotals);
+            });
+
+            // A use-by date in the past is almost always a typo — flag it, but
+            // never block the save (an old date is still valid data to record).
+            const expiryInput = row.querySelector('.expiry-input');
+            if (expiryInput) {
+                var checkExpiry = function () {
+                    var value = expiryInput.value;
+                    var today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    var stale = Boolean(value) && new Date(value + 'T00:00:00') < today;
+                    expiryInput.classList.toggle('is-invalid', stale);
+                    expiryInput.title = stale
+                        ? 'This date is in the past — check the use-by date on the delivery.'
+                        : 'Use-by date on the delivery — copied to the product when purchased';
+                };
+                expiryInput.addEventListener('change', checkExpiry);
+                expiryInput.addEventListener('input', checkExpiry);
+                checkExpiry();
+            }
+
+            const productSelect = row.querySelector('.product-select');
+            if (productSelect) {
+                productSelect.addEventListener('change', function () {
+                    const option = productSelect.options[productSelect.selectedIndex];
+                    const cost = row.querySelector('.cost-input');
+                    const quantity = row.querySelector('.quantity-input');
+                    // Pre-fill from the product only when the user has not typed anything.
+                    if (option && option.value && cost && !parseFloat(cost.value)) {
+                        cost.value = option.getAttribute('data-cost') || cost.value;
+                    }
+                    if (option && option.value && quantity && !parseFloat(quantity.value)) {
+                        quantity.value = '1';
+                    }
+                    recalcTotals();
+                });
+            }
+        }
+
+        itemsContainer.querySelectorAll('.order-item').forEach(wireRow);
+
+        const addButton = document.getElementById('addItem');
+        if (addButton) {
+            addButton.addEventListener('click', function () {
+                const index = highestIndex() + 1;
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = itemTemplate.innerHTML.replace(/__prefix__/g, index).trim();
+                const row = wrapper.querySelector('.order-item');
+                itemsContainer.appendChild(row);
+                bumpTotalForms(index);
+                wireRow(row);
+                recalcTotals();
+            });
+        }
+
+        bumpTotalForms(highestIndex());
+        recalcTotals();
+        // ---- supplier sidebar ------------------------------------------
+        const supplierSelect = document.getElementById('id_supplier');
+        const supplierInfo = document.getElementById('supplierInfo');
+        const supplierData = {
+            {% for supplier in suppliers %}"{{ supplier.id }}": {
+                name: "{{ supplier.name|escapejs }}",
+                contact: "{{ supplier.contact_person|default:''|escapejs }}",
+                phone: "{{ supplier.phone|default:''|escapejs }}",
+                email: "{{ supplier.email|default:''|escapejs }}"
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        };
+
+        function renderSupplier() {
+            if (!supplierSelect || !supplierInfo) { return; }
+            const supplier = supplierData[supplierSelect.value];
+            if (!supplier) {
+                supplierInfo.innerHTML = '<p class="text-muted">Select a supplier to view details</p>';
+                return;
+            }
+            supplierInfo.innerHTML =
+                '<h6 class="mb-1">' + escapeHtml(supplier.name) + '</h6>' +
+                '<p class="small mb-1">' + escapeHtml(supplier.contact || 'No contact person') + '</p>' +
+                '<p class="small text-muted mb-1"><i class="fas fa-phone"></i> ' +
+                    escapeHtml(supplier.phone || 'No phone') + '</p>' +
+                '<p class="small text-muted mb-0"><i class="fas fa-envelope"></i> ' +
+                    escapeHtml(supplier.email || 'No email') + '</p>';
+        }
+
+        if (supplierSelect) {
+            supplierSelect.addEventListener('change', renderSupplier);
+            renderSupplier();
+        }
+    });
+</script>
 
 
 <style>

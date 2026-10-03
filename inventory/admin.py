@@ -2,7 +2,11 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.db.models import Sum, Count
-from .models import Category, Supplier, Product, StockMovement, PurchaseOrder, PurchaseOrderItem
+from .models import (
+    Category, Supplier, Product, StockMovement, PurchaseOrder, PurchaseOrderItem,
+    SupplierReturn, SupplierReturnItem,
+)
+from core.formatting import format_money
 
 class ProductInline(admin.TabularInline):
     """Inline display of products for Category and Supplier"""
@@ -74,12 +78,12 @@ class StockMovementInline(admin.TabularInline):
 class PurchaseOrderItemInline(admin.TabularInline):
     """Inline display of items for PurchaseOrder"""
     model = PurchaseOrderItem
-    fields = ['product', 'quantity', 'unit_cost', 'total_cost_display']
+    fields = ['product', 'quantity', 'unit_cost', 'expiry_date', 'total_cost_display']
     readonly_fields = ['total_cost_display']
     extra = 1
     
     def total_cost_display(self, obj):
-        return f"${obj.total_cost:.2f}"
+        return format_money(obj.total_cost)
     total_cost_display.short_description = 'Total Cost'
 
 @admin.register(Product)
@@ -93,10 +97,14 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ['name', 'sku', 'barcode', 'category__name', 'supplier__name']
     readonly_fields = [
         'profit_margin_display', 'stock_status_display', 'total_value_display',
-        'created_display', 'updated_display'
+        'expiry_display', 'created_display', 'updated_display'
     ]
     list_per_page = 50
     actions = ['mark_as_high_value', 'mark_as_high_risk']
+
+    def get_queryset(self, request):
+        """The shelf-life column is derived, so ask for it explicitly."""
+        return super().get_queryset(request).with_expiry()
     
     fieldsets = (
         ('Basic Information', {
@@ -120,7 +128,7 @@ class ProductAdmin(admin.ModelAdmin):
         }),
         ('Product Details', {
             'fields': (
-                'expiry_date',
+                'expiry_display',
                 'requires_refrigeration',
                 ('is_high_value', 'is_high_theft_risk')
             )
@@ -147,7 +155,7 @@ class ProductAdmin(admin.ModelAdmin):
     min_stock_display.admin_order_field = 'min_stock_level'
     
     def selling_price_display(self, obj):
-        return f"${obj.selling_price}"
+        return format_money(obj.selling_price)
     selling_price_display.short_description = 'Price'
     selling_price_display.admin_order_field = 'selling_price'
     
@@ -180,8 +188,30 @@ class ProductAdmin(admin.ModelAdmin):
     
     def total_value_display(self, obj):
         total_value = obj.current_stock * obj.cost_price
-        return f"${total_value:.2f}"
+        return format_money(total_value)
     total_value_display.short_description = 'Total Value (Cost)'
+
+    def expiry_display(self, obj):
+        """Read-only: the date comes from the received purchase order lines."""
+        if not obj.expiry_date:
+            return "Not recorded — set it on the purchase order line"
+        style = {
+            'expired': 'color: #dc3545; font-weight: bold;',
+            'expiring_soon': 'color: #fd7e14; font-weight: bold;',
+        }.get(obj.expiry_status, '')
+        days = obj.days_until_expiry
+        if days < 0:
+            note = f'expired {-days} day{"s" if -days != 1 else ""} ago'
+        elif days == 0:
+            note = 'expires today'
+        else:
+            note = f'{days} day{"s" if days != 1 else ""} left'
+        return format_html(
+            '<span style="{}">{}</span><br><small>{}</small>',
+            style, obj.expiry_date, note,
+        )
+    expiry_display.short_description = 'Expiry (from deliveries)'
+
     
     def created_display(self, obj):
         return "—"  # Add when you have created_at field
@@ -292,7 +322,7 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
     status_display.short_description = 'Status'
     
     def total_amount_display(self, obj):
-        return f"${obj.total_amount:.2f}"
+        return format_money(obj.total_amount)
     total_amount_display.short_description = 'Total Amount'
     
     def item_count_display(self, obj):
@@ -317,20 +347,71 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
 @admin.register(PurchaseOrderItem)
 class PurchaseOrderItemAdmin(admin.ModelAdmin):
     list_display = [
-        'purchase_order', 'product', 'quantity', 'unit_cost_display', 
-        'total_cost_display'
+        'purchase_order', 'product', 'quantity', 'unit_cost_display',
+        'expiry_date', 'total_cost_display'
     ]
     list_filter = ['purchase_order__supplier', 'purchase_order__status']
     search_fields = ['product__name', 'purchase_order__id']
     list_per_page = 50
     
     def unit_cost_display(self, obj):
-        return f"${obj.unit_cost:.2f}"
+        return format_money(obj.unit_cost)
     unit_cost_display.short_description = 'Unit Cost'
     
     def total_cost_display(self, obj):
-        return f"${obj.total_cost:.2f}"
+        return format_money(obj.total_cost)
     total_cost_display.short_description = 'Total Cost'
+
+class SupplierReturnItemInline(admin.TabularInline):
+    """Inline display of the items sent back to a supplier."""
+    model = SupplierReturnItem
+    fields = ['product', 'quantity', 'unit_cost', 'line_total_display']
+    readonly_fields = ['line_total_display']
+    extra = 1
+
+    def line_total_display(self, obj):
+        return format_money(obj.total_cost)
+    line_total_display.short_description = 'Line Total'
+
+
+@admin.register(SupplierReturn)
+class SupplierReturnAdmin(admin.ModelAdmin):
+    list_display = [
+        'reference', 'created_at', 'supplier', 'purchase_order',
+        'item_count', 'total_amount_display', 'processed_by',
+    ]
+    list_filter = ['created_at', 'supplier']
+    search_fields = ['reference', 'supplier__name', 'purchase_order__id']
+    readonly_fields = ['reference', 'total_amount', 'created_at', 'processed_by']
+    date_hierarchy = 'created_at'
+    list_per_page = 20
+
+    inlines = [SupplierReturnItemInline]
+
+    def item_count(self, obj):
+        return obj.items.count()
+    item_count.short_description = 'Items'
+
+    def total_amount_display(self, obj):
+        return format_money(obj.total_amount)
+    total_amount_display.short_description = 'Value'
+
+
+@admin.register(SupplierReturnItem)
+class SupplierReturnItemAdmin(admin.ModelAdmin):
+    list_display = ['supplier_return', 'product', 'quantity', 'unit_cost_display', 'line_total_display']
+    list_filter = ['supplier_return__created_at', 'supplier_return__supplier']
+    search_fields = ['product__name', 'supplier_return__reference']
+    list_per_page = 50
+
+    def unit_cost_display(self, obj):
+        return format_money(obj.unit_cost)
+    unit_cost_display.short_description = 'Unit Cost'
+
+    def line_total_display(self, obj):
+        return format_money(obj.total_cost)
+    line_total_display.short_description = 'Line Total'
+
 
 # Optional: Custom admin site header and title
 admin.site.site_header = "MiniSuper Inventory Administration"

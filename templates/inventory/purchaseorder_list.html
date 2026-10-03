@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency %}
 {% load static %}
 
 {% block title %}Purchase Orders - POS.CarlKasa{% endblock %}
@@ -21,9 +22,9 @@
                         <label for="status_filter" class="form-label">Order Status</label>
                         <select class="form-select" id="status_filter" name="status">
                             <option value="">All Statuses</option>
-                            <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
-                            <option value="ordered" {% if status_filter == 'ordered' %}selected{% endif %}>Ordered</option>
-                            <option value="received" {% if status_filter == 'received' %}selected{% endif %}>Received</option>
+                            <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft (not placed)</option>
+                            <option value="ordered" {% if status_filter == 'ordered' %}selected{% endif %}>Placed</option>
+                            <option value="received" {% if status_filter == 'received' %}selected{% endif %}>Purchased</option>
                             <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
                         </select>
                     </div>
@@ -92,7 +93,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h4>{{ draft_orders }}</h4>
-                        <p class="mb-0">Draft</p>
+                        <p class="mb-0">Not placed</p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-edit fa-2x"></i>
@@ -107,7 +108,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h4>{{ ordered_orders }}</h4>
-                        <p class="mb-0">Ordered</p>
+                        <p class="mb-0">Placed</p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-paper-plane fa-2x"></i>
@@ -122,7 +123,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h4>{{ received_orders }}</h4>
-                        <p class="mb-0">Received</p>
+                        <p class="mb-0">Purchased</p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-check-circle fa-2x"></i>
@@ -151,11 +152,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4>${{ total_order_value|floatformat:2 }}</h4>
+                        <h4>{{ total_order_value|money }}</h4>
                         <p class="mb-0">Total Value</p>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-dollar-sign fa-2x"></i>
+                        <i class="fas fa-money-bill-wave fa-2x"></i>
                     </div>
                 </div>
             </div>
@@ -181,18 +182,32 @@
                 </div>
             </div>
             <div class="card-body p-0">
+                <!-- One tab per status, so received purchases can be read apart
+                     from the orders still being chased. -->
+                <ul class="nav nav-pills px-3 pt-3 pb-2 flex-wrap gap-1">
+                    {% for value, label, count, icon in status_tabs %}
+                    <li class="nav-item">
+                        <a class="nav-link py-1 px-3 {% if status_filter == value %}active{% else %}text-dark{% endif %}"
+                           href="{% querystring status=value page=None %}">
+                            <i class="fas {{ icon }} me-1"></i>{{ label }}
+                            <span class="badge {% if status_filter == value %}bg-light text-dark{% else %}bg-secondary{% endif %}">{{ count }}</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th width="10%">Order #</th>
-                                <th width="15%">Supplier</th>
-                                <th width="12%">Order Date</th>
-                                <th width="12%">Expected Delivery</th>
-                                <th width="10%" class="text-center">Items</th>
-                                <th width="12%" class="text-end">Total Amount</th>
-                                <th width="12%" class="text-center">Status</th>
-                                <th width="17%" class="text-center">Actions</th>
+                                <th width="9%">Order #</th>
+                                <th width="14%">Supplier</th>
+                                <th width="11%">Order Date</th>
+                                <th width="11%">Expected Delivery</th>
+                                <th width="6%" class="text-center">Items</th>
+                                <th width="10%" class="text-end">Total Amount</th>
+                                <th width="14%">Expiry</th>
+                                <th width="10%" class="text-center">Status</th>
+                                <th width="15%" class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -207,9 +222,15 @@
                                             <i class="fas fa-truck text-muted me-2"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-2">
+                                            {% if order.supplier %}
                                             <strong>{{ order.supplier.name }}</strong>
                                             <br>
                                             <small class="text-muted">{{ order.supplier.contact_person }}</small>
+                                            {% else %}
+                                            <strong class="text-muted">No supplier</strong>
+                                            <br>
+                                            <small class="text-muted">walk-in / cash purchase</small>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </td>
@@ -241,7 +262,33 @@
                                     <span class="badge bg-primary rounded-pill">{{ order.items.count }}</span>
                                 </td>
                                 <td class="text-end">
-                                    <strong class="text-success">${{ order.total_amount|floatformat:2 }}</strong>
+                                    <strong class="text-success">{{ order.total_amount|money }}</strong>
+                                </td>
+                                <td>
+                                    {% if order.earliest_expiry %}
+                                    <span class="{% if order.status != 'received' %}text-muted{% elif order.expired_line_count %}text-danger fw-bold{% elif order.days_until_earliest_expiry <= expiry_soon_days %}text-warning{% else %}text-success{% endif %}">
+                                        {{ order.earliest_expiry|date:"M d, Y" }}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">
+                                        {% if order.status != 'received' %}
+                                        Use-by on this delivery
+                                        {% elif order.expired_line_count %}
+                                        Expired &middot; {{ order.expired_line_count }} line{{ order.expired_line_count|pluralize }} past
+                                        {% elif order.days_until_earliest_expiry == 0 %}
+                                        Expires today
+                                        {% else %}
+                                        {{ order.days_until_earliest_expiry }} day{{ order.days_until_earliest_expiry|pluralize }} left
+                                        {% endif %}
+                                        {% if order.expiry_date_count > 1 %}
+                                        &middot; earliest of {{ order.expiry_date_count }}
+                                        {% endif %}
+                                    </small>
+                                    {% elif order.status == 'received' %}
+                                    <span class="text-muted">Not recorded</span>
+                                    {% else %}
+                                    <span class="text-muted">&mdash;</span>
+                                    {% endif %}
                                 </td>
                                 <td class="text-center">
                                     <span class="badge 
@@ -249,7 +296,10 @@
                                         {% elif order.status == 'ordered' %}bg-info
                                         {% elif order.status == 'received' %}bg-success
                                         {% else %}bg-danger{% endif %}">
-                                        {{ order.get_status_display }}
+                                        {% if order.status == 'draft' %}Draft (not placed)
+                                        {% elif order.status == 'ordered' %}Placed
+                                        {% elif order.status == 'received' %}Purchased
+                                        {% else %}Cancelled{% endif %}
                                     </span>
                                     {% if order.is_overdue %}
                                     <br>
@@ -265,16 +315,17 @@
                                         <a href="{% url 'purchase-order-update' order.pk %}" class="btn btn-outline-secondary" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <button class="btn btn-outline-success" 
-                                                onclick="markAsOrdered({{ order.id }})"
-                                                title="Mark as Ordered">
+                                        <button class="btn btn-outline-primary" 
+                                                onclick="placeOrder({{ order.id }})"
+                                                title="Place Order">
                                             <i class="fas fa-paper-plane"></i>
                                         </button>
-                                        {% elif order.status == 'ordered' %}
+                                        {% endif %}
+                                        {% if order.status == 'draft' or order.status == 'ordered' %}
                                         <button class="btn btn-outline-success" 
-                                                onclick="markAsReceived({{ order.id }})"
-                                                title="Mark as Received">
-                                            <i class="fas fa-check"></i>
+                                                onclick="purchaseOrder({{ order.id }})"
+                                                title="Purchase (add to stock)">
+                                            <i class="fas fa-cart-plus"></i>
                                         </button>
                                         {% endif %}
                                         {% if order.status != 'received' and order.status != 'cancelled' %}
@@ -289,7 +340,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="8" class="text-center py-5">
+                                <td colspan="9" class="text-center py-5">
                                     <div class="text-muted">
                                         <i class="fas fa-file-invoice fa-3x mb-3"></i>
                                         <h4>No purchase orders found</h4>
@@ -316,55 +367,47 @@
 </div>
 
 <!-- Pagination -->
-{% if purchase_orders.paginator.num_pages > 1 %}
+{% if page_obj.paginator.num_pages > 1 %}
 <nav aria-label="Purchase orders pagination" class="mt-4">
     <ul class="pagination justify-content-center">
-        {% if purchase_orders.has_previous %}
+        {% if page_obj.has_previous %}
         <li class="page-item">
-            <a class="page-link" href="?page=1{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_supplier %}&supplier={{ selected_supplier }}{% endif %}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
-                First
-            </a>
+            <a class="page-link" href="{% querystring page=1 %}">First</a>
         </li>
         <li class="page-item">
-            <a class="page-link" href="?page={{ purchase_orders.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_supplier %}&supplier={{ selected_supplier }}{% endif %}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
-                Previous
-            </a>
+            <a class="page-link" href="{% querystring page=page_obj.previous_page_number %}">Previous</a>
         </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">First</span></li>
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
         {% endif %}
 
-        {% for num in purchase_orders.paginator.page_range %}
-            {% if purchase_orders.number == num %}
-            <li class="page-item active">
-                <span class="page-link">{{ num }}</span>
-            </li>
-            {% elif num > purchase_orders.number|add:'-3' and num < purchase_orders.number|add:'3' %}
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_supplier %}&supplier={{ selected_supplier }}{% endif %}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
-                    {{ num }}
-                </a>
+                <a class="page-link" href="{% querystring page=num %}">{{ num }}</a>
             </li>
             {% endif %}
         {% endfor %}
 
-        {% if purchase_orders.has_next %}
+        {% if page_obj.has_next %}
         <li class="page-item">
-            <a class="page-link" href="?page={{ purchase_orders.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_supplier %}&supplier={{ selected_supplier }}{% endif %}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
-                Next
-            </a>
+            <a class="page-link" href="{% querystring page=page_obj.next_page_number %}">Next</a>
         </li>
         <li class="page-item">
-            <a class="page-link" href="?page={{ purchase_orders.paginator.num_pages }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if selected_supplier %}&supplier={{ selected_supplier }}{% endif %}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
-                Last
-            </a>
+            <a class="page-link" href="{% querystring page=page_obj.paginator.num_pages %}">Last</a>
         </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+        <li class="page-item disabled"><span class="page-link">Last</span></li>
         {% endif %}
     </ul>
-    
+
     <div class="text-center text-muted small mt-2">
-        Page {{ purchase_orders.number }} of {{ purchase_orders.paginator.num_pages }}
-        {% if purchase_orders.paginator.count %}
-        • {{ purchase_orders.paginator.count }} total orders
-        {% endif %}
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        &bull; {{ page_obj.paginator.count }} total orders
     </div>
 </nav>
 {% endif %}
@@ -396,21 +439,21 @@
 <script>
     let currentOrderId = null;
 
-    function markAsOrdered(orderId) {
+    function placeOrder(orderId) {
         currentOrderId = orderId;
-        document.getElementById('actionModalTitle').textContent = 'Mark as Ordered';
-        document.getElementById('actionModalBody').textContent = 'Are you sure you want to mark this purchase order as ordered? This will update the order status.';
+        document.getElementById('actionModalTitle').textContent = 'Place Order';
+        document.getElementById('actionModalBody').textContent = 'Place this purchase order? Use this only for an order created before the straight flow — new orders are created already placed.';
         document.getElementById('actionForm').action = `{% url 'purchase-order-mark-ordered' 0 %}`.replace('0', orderId);
         new bootstrap.Modal(document.getElementById('actionModal')).show();
     }
 
-    function markAsReceived(orderId) {
+    function purchaseOrder(orderId) {
         currentOrderId = orderId;
-        document.getElementById('actionModalTitle').textContent = 'Mark as Received';
+        document.getElementById('actionModalTitle').textContent = 'Purchase Order';
         document.getElementById('actionModalBody').innerHTML = `
-            <p>Are you sure you want to mark this purchase order as received?</p>
+            <p>Purchase this order?</p>
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> This will update stock levels for all items in the order.
+                <i class="fas fa-info-circle"></i> Every item on the order will be added to stock and one stock movement will be recorded per item. This can only be done once per order.
             </div>
         `;
         document.getElementById('actionForm').action = `{% url 'purchase-order-receive' 0 %}`.replace('0', orderId);

@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load currency %}
+
+{% block title %}Currency &amp; Settings - POS.CarlKasa{% endblock %}
+{% block page_title %}Currency &amp; Settings{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-coins me-2"></i>Currency</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.currency.id_for_label }}" class="form-label">Currency</label>
+                            {{ form.currency }}
+                            <div class="form-text">{{ form.currency.help_text }}</div>
+                            {% if form.currency.errors %}<div class="text-danger small">{{ form.currency.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.symbol_override.id_for_label }}" class="form-label">Custom symbol</label>
+                            {{ form.symbol_override }}
+                            <div class="form-text">{{ form.symbol_override.help_text }}</div>
+                            {% if form.symbol_override.errors %}<div class="text-danger small">{{ form.symbol_override.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <h6 class="text-uppercase text-muted small mb-3">Number format</h6>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.symbol_position.id_for_label }}" class="form-label">Symbol position</label>
+                            {{ form.symbol_position }}
+                            {% if form.symbol_position.errors %}<div class="text-danger small">{{ form.symbol_position.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.decimal_places.id_for_label }}" class="form-label">Decimals</label>
+                            {{ form.decimal_places }}
+                            <div class="form-text">{{ form.decimal_places.help_text }}</div>
+                            {% if form.decimal_places.errors %}<div class="text-danger small">{{ form.decimal_places.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.thousands_separator.id_for_label }}" class="form-label">Thousands separator</label>
+                            {{ form.thousands_separator }}
+                            {% if form.thousands_separator.errors %}<div class="text-danger small">{{ form.thousands_separator.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.decimal_separator.id_for_label }}" class="form-label">Decimal separator</label>
+                            {{ form.decimal_separator }}
+                            {% if form.decimal_separator.errors %}<div class="text-danger small">{{ form.decimal_separator.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-3 mb-0">
+            <i class="fas fa-info-circle me-1"></i>
+            Changing the currency only changes how amounts are <strong>displayed</strong> — the
+            numbers already stored in the database are not converted. Pick your store currency
+            before recording prices so everything stays consistent.
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-eye me-2"></i>Live preview</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">This is exactly how money will appear in the app, on
+                    receipts and in exported reports.</p>
+                <table class="table table-sm mb-3">
+                    <tbody id="previewRows"></tbody>
+                </table>
+                <div class="border rounded p-3 bg-body-tertiary">
+                    <div class="small text-muted">Example (product price)</div>
+                    <div class="h4 mb-0" id="previewProduct">—</div>
+                    <div class="small text-muted mt-2">Example (total of a sale)</div>
+                    <div class="h5 mb-0 text-success" id="previewSale">—</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Currently saved</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-1"><strong>Currency:</strong> {{ currency_name }} ({{ currency_code }})</p>
+                <p class="mb-1"><strong>Symbol:</strong> {{ currency_symbol }}</p>
+                <p class="mb-1"><strong>Decimals:</strong> {{ currency_decimals }}</p>
+                <p class="mb-0"><strong>Saved on:</strong> {{ site_settings.updated_at|date:"d M Y H:i" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ currency_presets|json_script:"currencyPresets" }}
+{{ preview_amounts|json_script:"previewAmounts" }}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    const presets = JSON.parse(document.getElementById('currencyPresets').textContent);
+    const amounts = JSON.parse(document.getElementById('previewAmounts').textContent);
+    const SEPARATORS = { comma: ',', dot: '.', space: ' ', none: '' };
+
+    const currencyEl = document.getElementById('id_currency');
+    const symbolEl = document.getElementById('id_symbol_override');
+    const positionEl = document.getElementById('id_symbol_position');
+    const decimalsEl = document.getElementById('id_decimal_places');
+    const thousandsEl = document.getElementById('id_thousands_separator');
+    const decimalEl = document.getElementById('id_decimal_separator');
+
+    function resolve(value, fallback, defaultValue) {
+        if (value && value !== 'auto') {
+            return value;
+        }
+        return (fallback === undefined || fallback === null) ? defaultValue : fallback;
+    }
+
+    // Mirrors core/models.py getters so the preview matches the server exactly.
+    function currentConfig() {
+        const preset = presets[currencyEl.value] || {};
+        const symbol = (symbolEl.value || '').trim() || preset.symbol || currencyEl.value;
+        return {
+            code: currencyEl.value,
+            symbol: symbol,
+            position: resolve(positionEl.value, preset.position, 'before'),
+            decimals: parseInt(resolve(decimalsEl.value, preset.decimals, 2), 10) || 0,
+            thousands: SEPARATORS[resolve(thousandsEl.value, preset.thousands, ',')],
+            decimal: SEPARATORS[resolve(decimalEl.value, preset.decimal, '.')]
+        };
+    }
+
+    function render() {
+        const cfg = currentConfig();
+        const rows = document.getElementById('previewRows');
+        rows.innerHTML = '';
+        amounts.forEach(function (amount) {
+            const tr = document.createElement('tr');
+            const label = document.createElement('td');
+            label.className = 'text-muted';
+            label.textContent = Number(amount).toFixed(2);
+            const value = document.createElement('td');
+            value.className = 'text-end fw-semibold';
+            value.textContent = formatMoneyWith(amount, cfg);
+            tr.appendChild(label);
+            tr.appendChild(value);
+            rows.appendChild(tr);
+        });
+        document.getElementById('previewProduct').textContent = formatMoneyWith(1299.9, cfg);
+        document.getElementById('previewSale').textContent = formatMoneyWith(48750.456, cfg);
+    }
+
+    [currencyEl, symbolEl, positionEl, decimalsEl, thousandsEl, decimalEl].forEach(function (el) {
+        el.addEventListener('input', render);
+        el.addEventListener('change', render);
+    });
+
+    render();
+})();
+</script>
+{% endblock %}

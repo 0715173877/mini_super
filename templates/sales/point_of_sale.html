@@ -1,9 +1,42 @@
 {% extends 'base.html' %}
+{% load currency %}
 {% load humanize %}  <!-- Add this line -->
 
 {% block title %}Point of Sale{% endblock %}
 
 {% block content %}
+<!-- Barcode Scanner Panel (Bluetooth / serial via Web Serial API) -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-body py-2">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-7">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                            <input type="text" class="form-control" id="barcodeInput"
+                                   placeholder="Scan a barcode or type it and press Enter..."
+                                   autocomplete="off" autofocus>
+                            <button class="btn btn-outline-secondary" type="button" id="barcodeSubmit">
+                                Add
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <button class="btn btn-primary w-100" type="button" id="connectScanner">
+                            <i class="fas fa-bluetooth-b"></i> Connect Bluetooth / Serial Scanner
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-2 d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary" id="scannerStatus">Scanner not connected - type a code manually</span>
+                    <span id="barcodeFeedback" class="small"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <!-- Products Grid -->
     <div class="col-md-8">
@@ -29,7 +62,7 @@
                              data-product-stock="{{ product.current_stock }}">
                             <div class="card-body text-center">
                                 <h6 class="card-title">{{ product.name }}</h6>
-                                <p class="card-text text-success">TZS {{ product.selling_price|floatformat:2|intcomma }}</p>
+                                <p class="card-text text-success">{{ product.selling_price|money }}</p>
                                 <small class="text-muted">Stock: {{ product.current_stock|intcomma }}</small>
                                 
                                 <!-- Quantity Selector -->
@@ -81,15 +114,15 @@
                     <div class="border-top pt-3">
                         <div class="row mb-2">
                             <div class="col-6">Subtotal:</div>
-                            <div class="col-6 text-end">TZS <span id="subtotal">0.00</span></div>
+                            <div class="col-6 text-end">{{ currency_symbol }} <span id="subtotal">0.00</span></div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-6">Tax:</div>
-                            <div class="col-6 text-end">TZS <span id="tax">0.00</span></div>
+                            <div class="col-6 text-end">{{ currency_symbol }} <span id="tax">0.00</span></div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-6"><strong>Total:</strong></div>
-                            <div class="col-6 text-end"><strong>TZS <span id="total">0.00</span></strong></div>
+                            <div class="col-6 text-end"><strong>{{ currency_symbol }} <span id="total">0.00</span></strong></div>
                         </div>
                     </div>
 
@@ -134,10 +167,8 @@
 <script>
     let cart = [];
 
-    // Format number to TZS with 2 decimal places and commas
-    function formatTZS(amount) {
-        return parseFloat(amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-    }
+    // Money is formatted with the currency configured in Settings → Currency & Settings
+    // (see formatMoney() in base.html).
 
     // Format number with commas (for quantities)
     function formatNumber(number) {
@@ -220,9 +251,9 @@
         const tax = subtotal * 0.08; // 8% tax
         const total = subtotal + tax;
 
-        subtotalEl.textContent = formatTZS(subtotal);
-        taxEl.textContent = formatTZS(tax);
-        totalEl.textContent = formatTZS(total);
+        subtotalEl.textContent = formatMoney(subtotal);
+        taxEl.textContent = formatMoney(tax);
+        totalEl.textContent = formatMoney(total);
         completeBtn.disabled = false;
 
         // Update cart items display
@@ -233,10 +264,10 @@
             itemEl.innerHTML = `
                 <div>
                     <strong>${item.name}</strong><br>
-                    <small>TZS ${formatTZS(item.price)} x ${formatNumber(item.quantity)}</small>
+                    <small>${formatMoney(item.price)} x ${formatNumber(item.quantity)}</small>
                 </div>
                 <div class="text-end">
-                    <strong>TZS ${formatTZS(item.total)}</strong>
+                    <strong>${formatMoney(item.total)}</strong>
                     <div class="btn-group btn-group-sm mt-1">
                         <button type="button" class="btn btn-outline-secondary decrease-qty" data-index="${index}">-</button>
                         <span class="btn btn-outline-light disabled">${formatNumber(item.quantity)}</span>
@@ -341,6 +372,161 @@
         this.appendChild(cartInput);
 
         this.submit();
+    });
+
+    // ------------------------------------------------------------------
+    // Barcode scanner integration (Bluetooth / serial via Web Serial API)
+    // ------------------------------------------------------------------
+    const BARCODE_LOOKUP_URL = "{% url 'barcode-lookup' '__CODE__' %}";
+    const barcodeInput = document.getElementById('barcodeInput');
+    const scannerStatus = document.getElementById('scannerStatus');
+    const barcodeFeedback = document.getElementById('barcodeFeedback');
+    const connectScannerBtn = document.getElementById('connectScanner');
+
+    let serialPort = null;
+    let serialReader = null;
+    let serialKeepReading = false;
+
+    function setScannerStatus(text, variant) {
+        scannerStatus.textContent = text;
+        scannerStatus.className = 'badge bg-' + variant;
+    }
+
+    function showBarcodeFeedback(text, variant) {
+        barcodeFeedback.textContent = text;
+        barcodeFeedback.className = 'small text-' + (variant === 'danger' ? 'danger'
+            : variant === 'warning' ? 'warning' : 'success');
+        if (text) {
+            setTimeout(() => { barcodeFeedback.textContent = ''; }, 4000);
+        }
+    }
+
+    // Look a scanned/typed code up and drop the product into the cart.
+    function addProductFromBarcode(code) {
+        code = (code || '').trim();
+        if (!code) return;
+
+        const url = BARCODE_LOOKUP_URL.replace('__CODE__', encodeURIComponent(code));
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(response => response.json().then(data => ({ ok: response.ok, data })))
+            .then(({ ok, data }) => {
+                if (!ok || !data.success) {
+                    showBarcodeFeedback(data.error || 'Unknown barcode.', 'danger');
+                    return;
+                }
+                addScannedProductToCart(data.product);
+            })
+            .catch(() => showBarcodeFeedback('Barcode lookup failed.', 'danger'));
+    }
+
+    function addScannedProductToCart(product) {
+        const productId = String(product.id);
+        const price = parseFloat(product.price);
+        const stock = parseFloat(product.stock);
+
+        const existingItem = cart.find(item => item.id === productId);
+
+        if (existingItem) {
+            if (existingItem.quantity + 1 > stock) {
+                showBarcodeFeedback('Only ' + formatNumber(stock) + ' in stock for ' + product.name + '.', 'warning');
+                return;
+            }
+            existingItem.quantity += 1;
+            existingItem.total = existingItem.quantity * price;
+        } else {
+            cart.push({
+                id: productId,
+                name: product.name,
+                price: price,
+                quantity: 1,
+                total: price
+            });
+        }
+
+        updateCartDisplay();
+        showBarcodeFeedback('Added ' + product.name, 'success');
+    }
+
+    // Manual entry / keyboard-wedge fallback: type or scan, then press Enter.
+    barcodeInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addProductFromBarcode(this.value);
+            this.value = '';
+        }
+    });
+
+    document.getElementById('barcodeSubmit').addEventListener('click', function () {
+        addProductFromBarcode(barcodeInput.value);
+        barcodeInput.value = '';
+        barcodeInput.focus();
+    });
+
+    async function connectScanner() {
+        if (!('serial' in navigator)) {
+            setScannerStatus('Web Serial unsupported - use Chrome/Edge on HTTPS or localhost', 'danger');
+            return;
+        }
+        try {
+            serialPort = await navigator.serial.requestPort();
+            // Most retail scanners default to 9600 8N1.
+            await serialPort.open({ baudRate: 9600 });
+            serialKeepReading = true;
+            setScannerStatus('Scanner connected - ready to scan', 'success');
+            connectScannerBtn.innerHTML = '<i class="fas fa-power-off"></i> Disconnect Scanner';
+            readSerialLoop();
+        } catch (err) {
+            setScannerStatus('Connection cancelled or failed', 'danger');
+        }
+    }
+
+    async function disconnectScanner() {
+        serialKeepReading = false;
+        if (serialReader) {
+            try { await serialReader.cancel(); } catch (e) { /* ignore */ }
+        }
+        if (serialPort) {
+            try { await serialPort.close(); } catch (e) { /* ignore */ }
+        }
+        serialPort = null;
+        setScannerStatus('Scanner not connected - type a code manually', 'secondary');
+        connectScannerBtn.innerHTML = '<i class="fas fa-bluetooth-b"></i> Connect Bluetooth / Serial Scanner';
+    }
+
+    async function readSerialLoop() {
+        const decoder = new TextDecoderStream();
+        serialPort.readable.pipeTo(decoder.writable).catch(() => { /* ignore on unplug */ });
+        serialReader = decoder.readable.getReader();
+
+        let buffer = '';
+        try {
+            while (serialKeepReading) {
+                const { value, done } = await serialReader.read();
+                if (done) break;
+                buffer += value;
+
+                // Scanners terminate each code with CR and/or LF.
+                let idx;
+                while ((idx = buffer.search(/[\r\n]/)) !== -1) {
+                    const code = buffer.slice(0, idx).trim();
+                    buffer = buffer.slice(idx + 1);
+                    if (code) addProductFromBarcode(code);
+                }
+            }
+        } catch (e) {
+            // Device disconnected.
+        } finally {
+            try { serialReader.releaseLock(); } catch (e) { /* ignore */ }
+            serialReader = null;
+        }
+    }
+
+    connectScannerBtn.addEventListener('click', function () {
+        if (serialKeepReading) {
+            disconnectScanner();
+        } else {
+            connectScanner();
+        }
     });
 </script>
 

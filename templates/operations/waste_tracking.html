@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load currency %}
 {% block title %}Waste Tracking - Operations{% endblock %}
 
 {% block content %}
@@ -24,10 +24,10 @@
                         <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
                             This Month's Waste Cost
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ monthly_waste_total }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ monthly_waste_total|money }}</div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
@@ -75,7 +75,7 @@
                 <tbody>
                     {% for record in waste_records %}
                     <tr>
-                        <td>{{ record.timestamp|date:"M d, Y" }}</td>
+                        <td>{{ record.created_at|date:"M d, Y" }}</td>
                         <td>
                             <strong>{{ record.product.name }}</strong>
                             <br><small class="text-muted">{{ record.product.sku }}</small>
@@ -86,7 +86,7 @@
                                 {{ record.get_category_display }}
                             </span>
                         </td>
-                        <td class="text-danger">${{ record.cost_value }}</td>
+                        <td class="text-danger">{{ record.cost_value|money }}</td>
                         <td>
                             <small>{{ record.reason|truncatewords:10 }}</small>
                         </td>

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load currency %}
 {% block title %}Dashboard - MiniSuper{% endblock %}
 
 {% block content %}
@@ -11,7 +11,15 @@
 </div>
 
 <!-- Stats Cards -->
+{% if not user_has_role and not user.is_superuser %}
+<div class="alert alert-warning">
+    <i class="fas fa-user-shield me-1"></i>
+    Your account has no role yet, so there is nothing to show here. Ask the owner to give you a
+    role under <strong>System &rsaquo; Users &amp; Roles</strong>.
+</div>
+{% endif %}
 <div class="row">
+    {% if perms.sales.view_sale %}
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card stats-card border-left-primary shadow h-100 py-2">
             <div class="card-body">
@@ -20,16 +28,18 @@
                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                             Today's Sales
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ today_sales|default:"0.00" }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ today_sales|default:"0.00"|money }}</div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    {% endif %}
 
+    {% if perms.inventory.view_product %}
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card stats-card border-left-success shadow h-100 py-2">
             <div class="card-body">
@@ -47,7 +57,9 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
+    {% if perms.sales.view_sale %}
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card stats-card border-left-info shadow h-100 py-2">
             <div class="card-body">
@@ -65,7 +77,9 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
+    {% if perms.operations.view_wasterecord %}
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card stats-card border-left-warning shadow h-100 py-2">
             <div class="card-body">
@@ -74,7 +88,7 @@
                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                             Monthly Waste
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{ monthly_waste|default:"0.00" }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ monthly_waste|default:"0.00"|money }}</div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-trash fa-2x text-gray-300"></i>
@@ -83,11 +97,13 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
 <!-- Charts and Tables -->
 <div class="row">
     <!-- Sales Chart -->
+    {% if perms.sales.view_sale %}
     <div class="col-xl-8 col-lg-7">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
@@ -98,8 +114,10 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
     <!-- Low Stock Items -->
+    {% if perms.inventory.view_product %}
     <div class="col-xl-4 col-lg-5">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
@@ -117,9 +135,11 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
 <!-- Recent Sales -->
+{% if perms.sales.view_sale %}
 <div class="row">
     <div class="col-12">
         <div class="card shadow mb-4">
@@ -142,8 +162,8 @@
                             {% for sale in recent_sales %}
                             <tr>
                                 <td>{{ sale.transaction_id }}</td>
-                                <td>{{ sale.timestamp|date:"M d, H:i" }}</td>
-                                <td>${{ sale.total_amount }}</td>
+                                <td>{{ sale.created_at|date:"M d, H:i" }}</td>
+                                <td>{{ sale.total_amount|money }}</td>
                                 <td>{{ sale.get_payment_method_display }}</td>
                                 <td>{{ sale.cashier.username }}</td>
                             </tr>
@@ -159,9 +179,11 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_scripts %}
+{% if perms.sales.view_sale %}
 <script>
     // Sales Chart
     const salesChart = new Chart(document.getElementById('salesChart'), {
@@ -185,4 +207,5 @@
         }
     });
 </script>
+{% endif %}
 {% endblock %}

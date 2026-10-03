@@ -23,19 +23,21 @@ urlpatterns = [
     # Purchase Order URLs
     path('purchase-orders/', views.PurchaseOrderListView.as_view(), name='purchase-order-list'),
     path('purchase-order/add/', views.PurchaseOrderCreateView.as_view(), name='purchase-order-create'),
-    path('purchase-order/<int:pk>/receive/', views.receive_purchase_order, name='purchase-order-receive'),
-    
+    path('purchase-order/<int:pk>/', views.PurchaseOrderDetailView.as_view(), name='purchase-order-detail'),
+    path('purchase-order/<int:pk>/edit/', views.PurchaseOrderUpdateView.as_view(), name='purchase-order-update'),
+    path('purchase-order/<int:pk>/delete/', views.PurchaseOrderDeleteView.as_view(), name='purchase-order-delete'),
+    path('purchase-order/<int:pk>/place/', views.mark_as_ordered, name='purchase-order-mark-ordered'),
+    path('purchase-order/<int:pk>/purchase/', views.receive_purchase_order, name='purchase-order-receive'),
+    path('purchase-order/<int:pk>/cancel/', views.cancel_purchase_order, name='purchase-order-cancel'),
+    # Deliveries that have been bought in, grouped per order (status == 'received').
+    path('purchases/', views.ReceivedPurchaseListView.as_view(), name='received-purchases'),
+
     # Stock Movement URLs
     path('stock-movements/', views.StockMovementListView.as_view(), name='stock-movement-list'),
     path('product/<int:product_id>/adjust-stock/', views.adjust_stock, name='adjust-stock'),
 
-      # Purchase Order URLs
-    path('purchase-orders/', views.PurchaseOrderListView.as_view(), name='purchase-order-list'),
-    path('purchase-order/add/', views.PurchaseOrderCreateView.as_view(), name='purchase-order-create'),
-    path('purchase-order/<int:pk>/', views.PurchaseOrderDetailView.as_view(), name='purchase-order-detail'),
-    path('purchase-order/<int:pk>/edit/', views.PurchaseOrderUpdateView.as_view(), name='purchase-order-update'),
-    path('purchase-order/<int:pk>/delete/', views.PurchaseOrderDeleteView.as_view(), name='purchase-order-delete'),
-    path('purchase-order/<int:pk>/mark-ordered/', views.mark_as_ordered, name='purchase-order-mark-ordered'),
-    path('purchase-order/<int:pk>/receive/', views.receive_purchase_order, name='purchase-order-receive'),
-    path('purchase-order/<int:pk>/cancel/', views.cancel_purchase_order, name='purchase-order-cancel'),
+    # Supplier Return URLs
+    path('supplier-returns/', views.SupplierReturnListView.as_view(), name='supplier-return-list'),
+    path('supplier-return/add/', views.SupplierReturnCreateView.as_view(), name='supplier-return-create'),
+    path('supplier-return/<int:pk>/', views.SupplierReturnDetailView.as_view(), name='supplier-return-detail'),
 ]

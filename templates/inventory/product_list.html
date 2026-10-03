@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency %}
 {% load humanize %}
 
 {% block title %}Products - Inventory{% endblock %}
@@ -28,6 +29,8 @@
             <option value="">All Stock Status</option>
             <option value="low">Low Stock</option>
             <option value="out">Out of Stock</option>
+            <option value="expired" {% if expiry_filter == 'expired' %}selected{% endif %}>Expired Only</option>
+            <option value="soon" {% if expiry_filter == 'soon' %}selected{% endif %}>Expiry Alerts</option>
         </select>
     </div>
     <div class="col-md-6">
@@ -48,12 +51,13 @@
                         <th>Current Stock</th>
                         <th>Price</th>
                         <th>Status</th>
+                        <th>Expiry</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for product in products %}
-                    <tr class="{% if product.stock_status == 'out_of_stock' %}out-of-stock{% elif product.stock_status == 'low_stock' %}low-stock{% endif %}">
+                    <tr class="{% if product.stock_status == 'out_of_stock' %}out-of-stock{% elif product.stock_status == 'low_stock' %}low-stock{% endif %}{% if product.expiry_status == 'expired' %} expired{% elif product.expiry_status == 'expiring_soon' %} expiring-soon{% endif %}">
                         <td>{{ product.sku }}</td>
                         <td>
                             <strong>{{ product.name }}</strong>
@@ -65,9 +69,8 @@
                             {{ product.current_stock|intcomma }}
                             <small class="text-muted d-block">Min: {{ product.min_stock_level|intcomma }}</small>
                         </td>
-                        <td>
-                            TZS {{ product.selling_price|floatformat:2|intcomma }}
-                            <small class="text-muted d-block">Cost: TZS {{ product.cost_price|floatformat:2|intcomma }}</small>
+                        <td>{{ product.selling_price|money }}
+                            <small class="text-muted d-block">Cost:{{ product.cost_price|money }}</small>
                         </td>
                         <td>
                             {% if product.stock_status == 'out_of_stock' %}
@@ -76,6 +79,24 @@
                                 <span class="badge bg-warning">Low Stock</span>
                             {% else %}
                                 <span class="badge bg-success">In Stock</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.expiry_date %}
+                                <span class="{% if product.expiry_status == 'expired' %}text-danger fw-bold{% elif product.expiry_status == 'expiring_soon' %}text-warning fw-bold{% endif %}">
+                                    {{ product.expiry_date|date:"M d, Y" }}
+                                </span>
+                                <small class="d-block {% if product.expiry_status == 'expired' %}text-danger{% else %}text-muted{% endif %}">
+                                    {% if product.expiry_status == 'expired' %}
+                                        Expired {{ product.days_until_expiry|cut:"-" }} day{{ product.days_until_expiry|cut:"-"|pluralize }} ago
+                                    {% elif product.expiry_status == 'expiring_soon' %}
+                                        {% if product.days_until_expiry == 0 %}Expires today{% else %}{{ product.days_until_expiry }} day{{ product.days_until_expiry|pluralize }} left{% endif %}
+                                    {% else %}
+                                        {{ product.days_until_expiry }} days left
+                                    {% endif %}
+                                </small>
+                            {% else %}
+                                <span class="text-muted">-</span>
                             {% endif %}
                         </td>
                         <td>
@@ -177,6 +198,12 @@
                 stockMatch = row.classList.contains('low-stock');
             } else if (stock === 'out') {
                 stockMatch = row.classList.contains('out-of-stock');
+            } else if (stock === 'expired') {
+                stockMatch = row.classList.contains('expired');
+            } else if (stock === 'soon') {
+                // "Expiry alerts" mirrors the bell and the sidebar: already-expired
+                // stock is the most urgent case, so it is shown here too.
+                stockMatch = row.classList.contains('expiring-soon') || row.classList.contains('expired');
             }
             
             row.style.display = (categoryMatch && searchMatch && stockMatch) ? '' : 'none';
@@ -191,6 +218,14 @@
     
     .low-stock {
         background-color: #fff3cd;
+    }
+
+    .expired {
+        background-color: #f8d7da;
+    }
+
+    .expiring-soon {
+        background-color: #fff8e1;
     }
     
     .table-hover tbody tr:hover {
